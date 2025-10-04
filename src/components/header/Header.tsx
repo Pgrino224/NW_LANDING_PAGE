@@ -11,12 +11,13 @@ const Header = () => {
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle signup logic here
-    console.log('Email submitted:', email);
-    setEmail('');
-    setIsModalOpen(false);
+  const handleSubmit = () => {
+    // Let Netlify handle the form submission
+    // Close modal and reset email after a brief delay to allow submission
+    setTimeout(() => {
+      setEmail('');
+      setIsModalOpen(false);
+    }, 100);
   };
 
   const handleNavigateWithCleanup = (path: string) => {
