@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Spline from '@splinetool/react-spline';
 import Container from '../../responsive-container/Container';
 import './GameModes.css';
 
 const GameModes = () => {
   const [hoveredMode, setHoveredMode] = useState<string | null>(null);
-  const [isStacked, setIsStacked] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const dioneVideoRef = useRef<HTMLVideoElement>(null);
 

@@ -45,7 +45,7 @@ const LimitedSupply = () => {
                 onMouseLeave={onPieLeave}
                 animationDuration={300}
               >
-                {data.map((entry, index) => (
+                {data.map((_entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}

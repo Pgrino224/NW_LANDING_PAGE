@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Home from './pages/Home';
+import Home from './pages/home';
 import NetWorth from './pages/networth';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -17,7 +17,6 @@ const AppContent = () => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smooth: true,
       syncTouch: true,
     });
 

@@ -1,29 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Container from '../responsive-container/Container';
 import './Header.css';
 
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
-  const [isPreloaded, setIsPreloaded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
-
-  const preloadNetworthScene = () => {
-    if (!isPreloaded) {
-      // Dynamically import UnicornScene to trigger preload
-      const link = document.createElement('link');
-      link.rel = 'prefetch';
-      link.as = 'script';
-      link.href = 'https://unicorn.studio/embed/OnNqTzoAjg0v69x0qApe';
-      document.head.appendChild(link);
-      setIsPreloaded(true);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
