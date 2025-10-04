@@ -1,0 +1,428 @@
+.syncr-section {
+  background-color: #000000;
+  color: #ffffe4;
+  padding: 80px 0;
+  position: relative;
+}
+
+.syncr-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.syncr-vignette-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to bottom, #000000, transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.syncr-vignette-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to top, #000000, transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.syncr-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.syncr-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+
+.syncr-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.syncr-title-group {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.syncr-title-main {
+  font-size: 100px;
+  font-weight: 400;
+  line-height: 1.2;
+  font-family: 'GeistMono', monospace;
+}
+
+.syncr-title-sub {
+  font-size: 24px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'GeistMono', monospace;
+}
+
+.syncr-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 800px;
+  text-align: left;
+  margin: 0 0 40px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.syncr-typebox-text {
+  display: none;
+  color: #ffffe4;
+  font-size: 18px;
+  font-family: 'GeistMono', monospace;
+  font-weight: 400;
+}
+
+.syncr-typebox-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.syncr-typebox {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  padding: 1px;
+  border-radius: 24px;
+  background: #ffffe4;
+  overflow: hidden;
+}
+
+.syncr-typebox-inner {
+  position: relative;
+  background-color: #1a1a1a;
+  border-radius: 23px;
+  padding: 24px 32px;
+  min-height: 120px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 24px;
+}
+
+.syncr-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffe4;
+  font-size: 18px;
+  font-family: 'GeistMono', monospace;
+  font-weight: 400;
+  padding-top: 0;
+  resize: none;
+  line-height: 1.5;
+}
+
+.syncr-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.syncr-arrow-button {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #ffffe4;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.syncr-arrow-button:hover {
+  transform: scale(1.05);
+}
+
+.syncr-arrow-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: black;
+  stroke-width: 2;
+}
+
+@media (max-width: 1024px) {
+  .syncr-title-main {
+    font-size: 64px;
+  }
+
+  .syncr-title-sub {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  .syncr-title-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .syncr-title-main {
+    font-size: 48px;
+  }
+
+  .syncr-title-sub {
+    font-size: 20px;
+  }
+
+  .syncr-description {
+    font-size: 14px;
+  }
+
+  .syncr-typebox-text {
+    display: block;
+    position: absolute;
+    top: 20px;
+    left: 30px;
+  }
+
+  .syncr-input {
+    display: none;
+  }
+
+  .syncr-typebox-inner {
+    padding: 30px;
+    min-height: 120px;
+    align-items: flex-start;
+  }
+
+  .syncr-arrow-button {
+    position: absolute;
+    bottom: 20px;
+    right: 30px;
+    left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .syncr-section {
+    padding: 60px 0;
+  }
+
+  .syncr-title-main {
+    font-size: 36px;
+  }
+
+  .syncr-title-sub {
+    font-size: 18px;
+  }
+
+  .syncr-content {
+    gap: 24px;
+  }
+
+  .syncr-arrow-button {
+    width: 40px;
+    height: 40px;
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+/* Chat Container - Desktop by default */
+.chat-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 400px;
+  height: 500px;
+  background-color: #1a1a1a;
+  border-radius: 24px;
+  border: 1px solid #ffffe4;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.chat-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'GeistMono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffe4;
+}
+
+.chat-close {
+  background: none;
+  border: none;
+  color: #ffffe4;
+  font-size: 32px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-close:hover {
+  opacity: 0.7;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 80%;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chat-message.user {
+  background-color: #ffffe4;
+  color: #000000;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.chat-message.bot {
+  background-color: rgba(255, 255, 228, 0.1);
+  color: #ffffe4;
+  align-self: flex-start;
+}
+
+.chat-input-wrapper {
+  padding: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 228, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #ffffe4;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  outline: none;
+}
+
+.chat-input::placeholder {
+  color: rgba(255, 255, 228, 0.5);
+}
+
+.chat-send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ffffe4;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-send-button:hover {
+  transform: scale(1.05);
+}
+
+.chat-send-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: black;
+  stroke-width: 2;
+}
+
+/* Mobile - Switch to full-screen */
+@media (max-width: 768px) {
+  .chat-container {
+    top: 0;
+    left: 0;
+    bottom: auto;
+    right: auto;
+    width: 100%;
+    height: 100vh;
+    background-color: #000000;
+    border-radius: 0;
+    border: none;
+  }
+
+  .chat-header {
+    padding: 24px;
+    font-size: 20px;
+  }
+
+  .chat-close {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .chat-input-wrapper {
+    padding: 20px;
+  }
+
+  .chat-input {
+    padding: 14px 18px;
+    font-size: 16px;
+  }
+
+  .chat-send-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .chat-send-button svg {
+    width: 24px;
+    height: 24px;
+  }
+}
