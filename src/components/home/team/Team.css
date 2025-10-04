@@ -46,7 +46,7 @@
 .founder-content {
   flex: 1;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 120px 1fr;
   column-gap: 16px;
   row-gap: 16px;
 }
