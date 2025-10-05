@@ -159,7 +159,7 @@
 
   .token-visuals-wrapper {
     left: 50%;
-    top: 50%;
+    top: 40%;
     right: auto;
     bottom: auto;
     transform: translate(-50%, -50%);
@@ -169,7 +169,7 @@
 
   .token-list-wrapper {
     position: absolute;
-    bottom: 60px;
+    bottom: 80px;
     right: 30px;
   }
 
@@ -201,7 +201,7 @@
 
   .token-visuals-wrapper {
     left: 50%;
-    top: 50%;
+    top: 40%;
     right: auto;
     bottom: auto;
     transform: translate(-50%, -50%);
@@ -211,7 +211,7 @@
 
   .token-list-wrapper {
     position: absolute;
-    bottom: 60px;
+    bottom: 80px;
     right: 20px;
   }
 
