@@ -98,6 +98,18 @@ export async function handler(event, context) {
     }
   } catch (error) {
     console.error('Signup error:', error)
+
+    // Check if it's a duplicate key error
+    if (error.code === '23505') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'This email is already registered'
+        })
+      }
+    }
+
     return {
       statusCode: 500,
       headers,

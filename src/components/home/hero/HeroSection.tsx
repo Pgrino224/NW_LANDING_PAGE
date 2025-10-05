@@ -10,6 +10,7 @@ const HeroSection = () => {
       </div>
       <Container>
         <div className="hero-content">
+          <h1 className="hero-title" style={{ fontFamily: 'Geist, sans-serif', fontWeight: 500 }}>ACEPYR</h1>
         </div>
       </Container>
     </section>

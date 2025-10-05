@@ -7,14 +7,19 @@ const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
 
-    // Send to our signup function for database storage and email
     try {
       const response = await fetch('/.netlify/functions/signup', {
         method: 'POST',
@@ -24,13 +29,31 @@ const Header = () => {
         body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        // Success - close modal and reset
+        setSubmitStatus('success');
         setEmail('');
-        setIsModalOpen(false);
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setSubmitStatus('idle');
+        }, 2000);
+      } else {
+        setSubmitStatus('error');
+        // Handle specific error messages
+        if (data.error?.includes('duplicate') || data.error?.includes('already exists')) {
+          setErrorMessage('This email is already registered');
+        } else {
+          setErrorMessage(data.error || 'Something went wrong. Please try again.');
+        }
       }
     } catch (error) {
+      setSubmitStatus('error');
+      setErrorMessage('Network error. Please try again.');
       console.error('Error calling signup function:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -121,20 +144,43 @@ const Header = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
             <h2 className="modal-title">Sign Up</h2>
-            <form onSubmit={handleSubmit} name="signup" data-netlify="true" method="POST">
-              <input type="hidden" name="form-name" value="signup" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="modal-input"
-                style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
-              />
-              <button type="submit" className="modal-submit-btn" style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}>Submit</button>
-            </form>
+
+            {submitStatus === 'success' ? (
+              <div className="modal-success">
+                <div className="success-checkmark">✓</div>
+                <p>Success! Check your email for confirmation.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} name="signup" data-netlify="true" method="POST">
+                <input type="hidden" name="form-name" value="signup" />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="modal-input"
+                  style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
+                  disabled={isSubmitting}
+                />
+                {submitStatus === 'error' && errorMessage && (
+                  <div className="modal-error">{errorMessage}</div>
+                )}
+                <button
+                  type="submit"
+                  className="modal-submit-btn"
+                  style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="spinner"></span>
+                  ) : (
+                    'Submit'
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
