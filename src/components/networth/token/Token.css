@@ -145,6 +145,10 @@
 }
 
 @media (max-width: 1024px) {
+  .token-section {
+    height: 250vh;
+  }
+
   .token-content-wrapper {
     min-height: 100vh;
     height: auto;
