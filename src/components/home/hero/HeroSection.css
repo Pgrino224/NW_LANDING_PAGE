@@ -48,14 +48,14 @@
 
 .hero-title {
   color: #000000;
-  font-size: 120px;
+  font-size: 140px;
   margin: 0;
   line-height: 1;
 }
 
 @media (max-width: 1024px) {
   .hero-title {
-    font-size: 80px;
+    font-size: 100px;
   }
 }
 
