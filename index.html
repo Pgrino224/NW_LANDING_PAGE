@@ -9,5 +9,10 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Hidden form for Netlify Forms detection -->
+    <form name="signup" netlify netlify-honeypot="bot-field" hidden>
+      <input type="text" name="email" />
+    </form>
   </body>
 </html>
