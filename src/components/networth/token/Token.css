@@ -247,6 +247,10 @@
     font-size: 20px;
   }
 
+  .token-item.active .token-name {
+    font-size: 15px;
+  }
+
   .token-number {
     font-size: 16px;
   }
