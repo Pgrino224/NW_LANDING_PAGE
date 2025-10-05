@@ -29,7 +29,7 @@ export async function handler(event, context) {
   });
 
   try {
-    const { email } = JSON.parse(event.body)
+    const { email, referrerXHandle } = JSON.parse(event.body)
 
     if (!email) {
       return {
@@ -44,8 +44,8 @@ export async function handler(event, context) {
 
     // Save to Neon database
     await client.query(
-      'INSERT INTO beta_signups (email, created_at) VALUES ($1, $2)',
-      [email, new Date().toISOString()]
+      'INSERT INTO beta_signups (email, referrer_x_handle, created_at) VALUES ($1, $2, $3)',
+      [email, referrerXHandle || null, new Date().toISOString()]
     );
 
     await client.end();

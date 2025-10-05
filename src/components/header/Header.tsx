@@ -6,6 +6,7 @@ import './Header.css';
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [referrerXHandle, setReferrerXHandle] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -26,7 +27,10 @@ const Header = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          referrerXHandle: referrerXHandle || null
+        }),
       });
 
       const data = await response.json();
@@ -34,6 +38,7 @@ const Header = () => {
       if (response.ok) {
         setSubmitStatus('success');
         setEmail('');
+        setReferrerXHandle('');
         // Auto-close modal after 2 seconds
         setTimeout(() => {
           setIsModalOpen(false);
@@ -160,6 +165,16 @@ const Header = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="modal-input"
+                  style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
+                  disabled={isSubmitting}
+                />
+                <input
+                  type="text"
+                  name="referrerXHandle"
+                  placeholder="Referred by (X handle - optional)"
+                  value={referrerXHandle}
+                  onChange={(e) => setReferrerXHandle(e.target.value)}
                   className="modal-input"
                   style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
                   disabled={isSubmitting}
