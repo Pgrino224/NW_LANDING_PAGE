@@ -32,25 +32,25 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         from: 'NetWorth <welcome@nettworth.live>',
         to: [email],
-        subject: 'Welcome to NetWorth Beta!',
+        subject: 'Welcome to NetWorth by Acepyr!',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #00f0ff;">Welcome to NetWorth Beta!</h2>
-            
-            <p>Thank you for signing up for NetWorth Beta!</p>
-            
-            <p>We're excited to have you join our community of financial innovators. You'll receive updates about our launch and exclusive access to new features.</p>
-            
-            <p>Get ready to democratize financial knowledge and build your NetWorth!</p>
-            
-            <p>Stay tuned!</p>
-            
+            <h2 style="color: #000000;">Welcome to NetWorth by Acepyr!</h2>
+
+            <p style="color: #000000;">Thank you for signing up for NetWorth!</p>
+
+            <p style="color: #000000;">We're excited to have you join our community of financial innovators. You'll receive updates about our launch and exclusive access to new features.</p>
+
+            <p style="color: #000000;">Get ready to democratize financial knowledge and build your NetWorth!</p>
+
+            <p style="color: #000000;">Stay tuned!</p>
+
             <br>
-            <p><strong>- The NetWorth Team</strong></p>
-            
+            <p style="color: #000000;"><strong>- The Acepyr Team</strong></p>
+
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 12px; color: #666;">
-              You're receiving this because you signed up for NetWorth Beta at networth.live
+              You're receiving this because you signed up for NetWorth at acepyr.com
             </p>
           </div>
         `

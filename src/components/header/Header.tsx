@@ -11,13 +11,27 @@ const Header = () => {
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
 
-  const handleSubmit = () => {
-    // Let Netlify handle the form submission
-    // Close modal and reset email after a brief delay to allow submission
-    setTimeout(() => {
-      setEmail('');
-      setIsModalOpen(false);
-    }, 100);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Send to our signup function for database storage and email
+    try {
+      const response = await fetch('/.netlify/functions/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        // Success - close modal and reset
+        setEmail('');
+        setIsModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Error calling signup function:', error);
+    }
   };
 
   const handleNavigateWithCleanup = (path: string) => {
@@ -107,7 +121,7 @@ const Header = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
             <h2 className="modal-title">Sign Up</h2>
-            <form onSubmit={handleSubmit} name="signup" data-netlify="true">
+            <form onSubmit={handleSubmit} name="signup" data-netlify="true" method="POST">
               <input type="hidden" name="form-name" value="signup" />
               <input
                 type="email"
