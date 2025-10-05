@@ -1,10 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import pkg from 'pg';
+const { Client } = pkg;
 import { Resend } from 'resend'
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -21,16 +17,20 @@ export async function handler(event, context) {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
+    return {
+      statusCode: 405,
       headers,
       body: JSON.stringify({ error: 'Method Not Allowed' })
     }
   }
 
+  const client = new Client({
+    connectionString: process.env.NETLIFY_DATABASE_URL,
+  });
+
   try {
     const { email } = JSON.parse(event.body)
-    
+
     if (!email) {
       return {
         statusCode: 400,
@@ -39,18 +39,16 @@ export async function handler(event, context) {
       }
     }
 
-    // Save to Supabase
-    const { error: dbError } = await supabase
-      .from('beta_signups')
-      .insert([{ 
-        email,
-        created_at: new Date().toISOString()
-      }])
-    
-    if (dbError) {
-      console.error('Database error:', dbError)
-      throw new Error('Failed to save signup')
-    }
+    // Connect to database
+    await client.connect();
+
+    // Save to Neon database
+    await client.query(
+      'INSERT INTO beta_signups (email, created_at) VALUES ($1, $2)',
+      [email, new Date().toISOString()]
+    );
+
+    await client.end();
     
     // Send welcome email with Resend
     try {
@@ -103,9 +101,16 @@ export async function handler(event, context) {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Failed to process signup. Please try again.' 
+      body: JSON.stringify({
+        error: 'Failed to process signup. Please try again.'
       })
+    }
+  } finally {
+    // Ensure client is closed even if there's an error
+    try {
+      await client.end();
+    } catch (e) {
+      // Client already closed or never connected
     }
   }
 }
