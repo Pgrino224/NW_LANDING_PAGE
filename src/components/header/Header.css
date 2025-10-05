@@ -64,7 +64,7 @@
 .header-signup-btn {
   background-color: black;
   color: white;
-  border: 1px solid white;
+  border: 1px solid #ffffef;
   padding: 10px 24px;
   border-radius: 8px;
   font-size: 16px;
@@ -75,7 +75,7 @@
 }
 
 .header-signup-btn:hover {
-  background-color: white;
+  background-color: #ffffef;
   color: black;
 }
 
@@ -172,17 +172,18 @@
   width: 100%;
   padding: 12px 16px;
   border-radius: 8px;
-  border: none;
-  background-color: white;
-  color: black;
+  border: 1px solid #ffffef;
+  background-color: black;
+  color: white;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.3s;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .modal-submit-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  background-color: #ffffef;
+  color: black;
 }
 
 .modal-submit-btn:disabled {

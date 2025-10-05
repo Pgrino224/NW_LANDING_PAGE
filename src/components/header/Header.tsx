@@ -169,10 +169,13 @@ const Header = () => {
                   style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
                   disabled={isSubmitting}
                 />
+                <label className="modal-label" style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200, fontSize: '14px', marginTop: '16px', marginBottom: '8px', color: '#ffffef', display: 'block' }}>
+                  Referred by (Optional)
+                </label>
                 <input
                   type="text"
                   name="referrerXHandle"
-                  placeholder="Referred by (X handle - optional)"
+                  placeholder="(X handle)"
                   value={referrerXHandle}
                   onChange={(e) => setReferrerXHandle(e.target.value)}
                   className="modal-input"
