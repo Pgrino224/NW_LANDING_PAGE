@@ -5,7 +5,7 @@
   functions = "apps/landing/netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # SPA routing - redirect all routes to index.html
 [[redirects]]
