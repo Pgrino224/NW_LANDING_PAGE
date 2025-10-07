@@ -1,0 +1,234 @@
+.team-section {
+  background-color: #000000;
+  color: #ffffe4;
+  padding: 80px 0;
+  width: 100%;
+}
+
+.team-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.team-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.team-title {
+  font-size: 48px;
+  font-weight: 400;
+  color: #ffffe4;
+  margin: 0;
+  font-family: 'HelveticaNeue', sans-serif;
+}
+
+.separator-line {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 40px 0;
+}
+
+.founder-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 60px;
+  margin-bottom: 40px;
+}
+
+.founder-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  column-gap: 16px;
+  row-gap: 16px;
+}
+
+.founder-name-row {
+  display: contents;
+}
+
+.founder-role-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+}
+
+.founder-role {
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.founder-position {
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.founder-name {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffe4;
+  margin: 0;
+  line-height: 1;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+}
+
+.founder-info-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.founder-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  max-width: 600px;
+}
+
+.founder-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.x-button {
+  width: 40px;
+  height: 40px;
+  background-color: #ffffe4;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.x-button:hover {
+  transform: scale(1.05);
+}
+
+.x-button svg {
+  width: 20px;
+  height: 20px;
+  fill: black;
+}
+
+.founder-email {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.founder-email:hover {
+  color: #ffffe4;
+}
+
+.founder-image-card {
+  width: 300px;
+  height: 400px;
+  background-color: #1a1a1a;
+  border-radius: 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.founder-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 1024px) {
+  .team-title {
+    font-size: 40px;
+  }
+
+  .founder-name {
+    font-size: 28px;
+  }
+
+  .founder-image-card {
+    width: 250px;
+    height: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .team-section {
+    padding: 60px 0;
+  }
+
+  .team-title {
+    font-size: 32px;
+  }
+
+  .founder-block {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .founder-name {
+    font-size: 24px;
+  }
+
+  .founder-image-card {
+    width: 100%;
+    height: 400px;
+  }
+
+  .separator-line {
+    margin: 32px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-section {
+    padding: 40px 0;
+  }
+
+  .team-title {
+    font-size: 24px;
+  }
+
+  .founder-name-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .founder-name {
+    font-size: 20px;
+  }
+
+  .founder-description {
+    font-size: 14px;
+  }
+
+  .founder-image-card {
+    height: 300px;
+  }
+}

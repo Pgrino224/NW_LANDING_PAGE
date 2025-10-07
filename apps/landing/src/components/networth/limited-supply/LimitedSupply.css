@@ -1,0 +1,143 @@
+.limited-supply-section {
+  background-color: black;
+  color: white;
+  padding: 80px 0;
+  width: 100%;
+}
+
+.limited-supply-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.limited-supply-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.limited-supply-title {
+  font-size: 48px;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+  font-family: 'GeistMono', monospace;
+}
+
+.pie-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+}
+
+.segment-detail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.segment-detail.active {
+  opacity: 1;
+}
+
+.segment-detail-name {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.segment-detail-percentage {
+  font-size: 24px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 16px;
+}
+
+.segment-detail-description {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+  .limited-supply-title {
+    font-size: 40px;
+  }
+
+  .pie-chart-container {
+    min-height: 400px;
+  }
+
+  .segment-detail-name {
+    font-size: 28px;
+  }
+
+  .segment-detail-percentage {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .limited-supply-section {
+    padding: 60px 0;
+  }
+
+  .limited-supply-title {
+    font-size: 32px;
+  }
+
+  .pie-chart-container {
+    min-height: 350px;
+  }
+
+  .segment-detail-name {
+    font-size: 24px;
+  }
+
+  .segment-detail-percentage {
+    font-size: 18px;
+  }
+
+  .segment-detail-description {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .limited-supply-section {
+    padding: 40px 0;
+  }
+
+  .limited-supply-title {
+    font-size: 24px;
+  }
+
+  .pie-chart-container {
+    min-height: 300px;
+  }
+
+  .segment-detail-name {
+    font-size: 20px;
+  }
+
+  .segment-detail-percentage {
+    font-size: 16px;
+  }
+
+  .segment-detail-description {
+    font-size: 13px;
+    max-width: 250px;
+  }
+}
