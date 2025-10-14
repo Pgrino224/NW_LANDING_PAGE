@@ -6,6 +6,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Home from './pages/home';
 import NetWorth from './pages/networth';
 import Verify from './pages/verify';
+import Bounty from './pages/bounty';
+import NFT from './pages/nft';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -70,6 +72,8 @@ const AppContent = () => {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/networth" element={<NetWorth />} />
+      <Route path="/bounty" element={<Bounty />} />
+      <Route path="/nft" element={<NFT />} />
       <Route path="/verify" element={<Verify />} />
     </Routes>
   );

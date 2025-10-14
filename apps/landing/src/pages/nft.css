@@ -1,0 +1,64 @@
+.nft-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+}
+
+.nft-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 100px 0 20px 0;
+}
+
+.nft-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.nft-title {
+  font-size: 80px;
+  font-weight: 400;
+  color: #ffffe4;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .nft-header {
+    padding: 80px 0 20px 0;
+  }
+
+  .nft-title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nft-header {
+    padding: 60px 0 16px 0;
+  }
+
+  .nft-title {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nft-header {
+    padding: 80px 0 12px 0;
+  }
+
+  .nft-subtitle {
+    font-size: 10px;
+  }
+
+  .nft-title {
+    font-size: 24px;
+  }
+}
