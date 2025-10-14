@@ -43,25 +43,33 @@
   z-index: 1;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  padding: 0 60px 60px;
 }
 
 .hero-title {
-  color: #000000;
-  font-size: 160px;
+  color: #ffffe4;
+  font-size: 280px;
   margin: 0;
   line-height: 1;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 1024px) {
+  .hero-content {
+    padding: 0 40px 40px;
+  }
+
   .hero-title {
-    font-size: 120px;
+    font-size: 200px;
   }
 }
 
 @media (max-width: 768px) {
   .hero-content {
     justify-content: center;
+    align-items: center;
+    padding: 0 20px;
   }
 
   .hero-title {
