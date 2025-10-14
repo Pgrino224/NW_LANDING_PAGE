@@ -28,7 +28,6 @@ const Header = () => {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [formOpenedAt, setFormOpenedAt] = useState<number>(0);
-  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
@@ -69,7 +68,7 @@ const Header = () => {
 
           // Render new widget
           try {
-            const widgetId = window.turnstile.render('#turnstile-widget', {
+            window.turnstile.render('#turnstile-widget', {
               sitekey: '0x4AAAAAAB6j86p5AbmVjVNV',
               callback: (token: string) => {
                 setTurnstileToken(token);
@@ -79,7 +78,6 @@ const Header = () => {
                 setTurnstileToken('');
               }
             });
-            setTurnstileWidgetId(widgetId);
           } catch (e) {
             console.error('Failed to render Turnstile:', e);
           }
@@ -97,7 +95,6 @@ const Header = () => {
       if (widgetElement) {
         widgetElement.innerHTML = '';
       }
-      setTurnstileWidgetId(null);
     }
   }, [isModalOpen]);
 
