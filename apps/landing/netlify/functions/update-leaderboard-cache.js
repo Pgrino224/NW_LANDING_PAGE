@@ -51,6 +51,13 @@ export async function handler(event, context) {
     const referrers = referrersResult.rows.map(row => row.referrer_x_handle);
     console.log(`Found ${referrers.length} referrers`);
 
+    // Clear existing cache for this bounty to remove duplicates from old capitalization
+    await client.query(
+      'DELETE FROM leaderboard_cache WHERE bounty_event_id = $1',
+      [activeBounty.id]
+    );
+    console.log('Cleared existing cache for bounty');
+
     // Calculate scores for each referrer
     for (const referrerHandle of referrers) {
       const cleanHandle = referrerHandle.replace('@', '');
