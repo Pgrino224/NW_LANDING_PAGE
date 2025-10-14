@@ -58,6 +58,14 @@ export async function handler(event, context) {
       }
     }
 
+    // Normalize X handle - remove @ symbol and whitespace, convert to lowercase
+    let normalizedHandle = null;
+    if (referrerXHandle && referrerXHandle.trim()) {
+      normalizedHandle = referrerXHandle.trim().replace(/^@/, '').toLowerCase();
+      // Add @ prefix for consistency
+      normalizedHandle = `@${normalizedHandle}`;
+    }
+
     // Verify Turnstile token
     if (!turnstileToken) {
       return {
@@ -136,7 +144,7 @@ export async function handler(event, context) {
     // Save to Neon database with verification token, IP address, and bounty_event_id
     await client.query(
       'INSERT INTO beta_signups (email, referrer_x_handle, verification_token, token_expires_at, ip_address, bounty_event_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [email, referrerXHandle || null, verificationToken, expiresAt.toISOString(), clientIP, activeBountyId, new Date().toISOString()]
+      [email, normalizedHandle, verificationToken, expiresAt.toISOString(), clientIP, activeBountyId, new Date().toISOString()]
     );
 
     await client.end();

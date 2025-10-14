@@ -32,16 +32,10 @@ export async function handler(event, context) {
     console.log('Processing bounty:', activeBounty.id);
     console.log('Scoring config:', scoringConfig);
 
-    // Find the bounty post from @lui5lee
-    const bountyPostId = await findBountyPost();
-    if (!bountyPostId) {
-      console.log('No bounty post found from @lui5lee');
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'No bounty post found' })
-      };
-    }
-    console.log('Bounty post ID:', bountyPostId);
+    // Bounty post ID searching disabled for now
+    // TODO: Re-enable when we need to track engagement on specific bounty posts
+    const bountyPostId = null;
+    console.log('Bounty post ID search disabled - processing signups and community joins only');
 
     // Get all unique referrer handles from various sources
     const referrersResult = await client.query(`
@@ -61,7 +55,7 @@ export async function handler(event, context) {
     for (const referrerHandle of referrers) {
       const cleanHandle = referrerHandle.replace('@', '');
       let totalScore = 0;
-      let userName = referrerHandle;
+      let userName = referrerHandle; // Default to handle
       const breakdown = {
         likes: 0,
         retweets: 0,
@@ -70,6 +64,17 @@ export async function handler(event, context) {
         referral_signups: 0,
         posts: 0
       };
+
+      // Fetch display name from X API
+      try {
+        const userInfo = await fetchXUserInfo(cleanHandle);
+        if (userInfo) {
+          userName = userInfo.name;
+        }
+      } catch (error) {
+        console.error(`Failed to fetch user info for ${cleanHandle}:`, error.message);
+        // Continue with handle as userName
+      }
 
       // Count referral signups for this bounty
       if (scoringConfig.referral_signups) {
@@ -91,8 +96,9 @@ export async function handler(event, context) {
         totalScore += breakdown.community_joins * scoringConfig.community_joins;
       }
 
-      // Fetch X engagement data if needed
-      if (scoringConfig.likes || scoringConfig.retweets || scoringConfig.comments) {
+      // Fetch X engagement data if needed and bounty post exists
+      // Currently disabled - bountyPostId is always null
+      if (bountyPostId && (scoringConfig.likes || scoringConfig.retweets || scoringConfig.comments)) {
         const engagement = await getEngagementForReferrer(cleanHandle, bountyPostId, bountyStartDate);
 
         userName = engagement.userName;
@@ -154,6 +160,32 @@ export async function handler(event, context) {
         details: error.message
       })
     };
+  }
+}
+
+// Fetch X user info (username and display name)
+async function fetchXUserInfo(handle) {
+  const BEARER_TOKEN = process.env.X_BEARER_TOKEN;
+
+  try {
+    const response = await fetch(`https://api.twitter.com/2/users/by/username/${handle}`, {
+      headers: { 'Authorization': `Bearer ${BEARER_TOKEN}` }
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch user info for ${handle}`);
+      return null;
+    }
+
+    const data = await response.json();
+    return {
+      id: data.data.id,
+      username: data.data.username,
+      name: data.data.name
+    };
+  } catch (error) {
+    console.error(`Error fetching user info for ${handle}:`, error);
+    return null;
   }
 }
 

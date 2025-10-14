@@ -10,7 +10,8 @@
   to = "/index.html"
   status = 200
 
-# Scheduled function to update leaderboard cache every hour
+# Scheduled function to update leaderboard cache every 5 minutes
 # Note: Scheduling only works in production, not local dev
+# Faster updates since we're only counting signups (no engagement tracking)
 [functions."update-leaderboard-cache"]
-  schedule = "@hourly"
+  schedule = "*/5 * * * *"

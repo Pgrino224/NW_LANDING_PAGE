@@ -159,7 +159,7 @@ const BountyLeaderboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bounty-search-input"
             />
-            <span className="bounty-update-info">Updating every hour</span>
+            <span className="bounty-update-info">Updating every 5 minutes</span>
           </div>
         )}
 
