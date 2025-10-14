@@ -37,9 +37,9 @@ export async function handler(event, context) {
     const bountyPostId = null;
     console.log('Bounty post ID search disabled - processing signups and community joins only');
 
-    // Get all unique referrer handles from various sources
+    // Get all unique referrer handles from various sources (normalized to lowercase)
     const referrersResult = await client.query(`
-      SELECT DISTINCT referrer_x_handle
+      SELECT DISTINCT LOWER(referrer_x_handle) as referrer_x_handle
       FROM (
         SELECT referrer_x_handle FROM beta_signups WHERE referrer_x_handle IS NOT NULL
         UNION
@@ -76,20 +76,20 @@ export async function handler(event, context) {
         // Continue with handle as userName
       }
 
-      // Count referral signups for this bounty
+      // Count referral signups for this bounty (case-insensitive match)
       if (scoringConfig.referral_signups) {
         const signupsResult = await client.query(
-          'SELECT COUNT(*) as count FROM beta_signups WHERE referrer_x_handle = $1 AND bounty_event_id = $2 AND email_verified = true',
+          'SELECT COUNT(*) as count FROM beta_signups WHERE LOWER(referrer_x_handle) = LOWER($1) AND bounty_event_id = $2 AND email_verified = true',
           [referrerHandle, activeBounty.id]
         );
         breakdown.referral_signups = parseInt(signupsResult.rows[0].count);
         totalScore += breakdown.referral_signups * scoringConfig.referral_signups;
       }
 
-      // Count community joins for this bounty
+      // Count community joins for this bounty (case-insensitive match)
       if (scoringConfig.community_joins) {
         const joinsResult = await client.query(
-          'SELECT COUNT(*) as count FROM community_joins WHERE referrer_x_handle = $1 AND bounty_event_id = $2',
+          'SELECT COUNT(*) as count FROM community_joins WHERE LOWER(referrer_x_handle) = LOWER($1) AND bounty_event_id = $2',
           [referrerHandle, activeBounty.id]
         );
         breakdown.community_joins = parseInt(joinsResult.rows[0].count);
