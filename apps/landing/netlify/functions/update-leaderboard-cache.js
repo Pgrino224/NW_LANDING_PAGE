@@ -37,9 +37,13 @@ export async function handler(event, context) {
     const bountyPostId = null;
     console.log('Bounty post ID search disabled - processing signups and community joins only');
 
-    // Get all unique referrer handles from various sources (normalized to lowercase)
+    // Get all unique referrer handles from various sources (normalized to lowercase with @ prefix)
     const referrersResult = await client.query(`
-      SELECT DISTINCT LOWER(referrer_x_handle) as referrer_x_handle
+      SELECT DISTINCT
+        CASE
+          WHEN LOWER(referrer_x_handle) LIKE '@%' THEN LOWER(referrer_x_handle)
+          ELSE CONCAT('@', LOWER(referrer_x_handle))
+        END as referrer_x_handle
       FROM (
         SELECT referrer_x_handle FROM beta_signups WHERE referrer_x_handle IS NOT NULL
         UNION
