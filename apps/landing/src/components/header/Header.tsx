@@ -64,14 +64,8 @@ const Header = () => {
         const widgetElement = document.getElementById('turnstile-widget');
 
         if (widgetElement && window.turnstile) {
-          // Reset previous widget if exists
-          if (turnstileWidgetId) {
-            try {
-              window.turnstile.reset(turnstileWidgetId);
-            } catch (e) {
-              console.log('Turnstile reset failed, will render new widget');
-            }
-          }
+          // Clear the widget container first to avoid duplicates
+          widgetElement.innerHTML = '';
 
           // Render new widget
           try {
@@ -97,8 +91,15 @@ const Header = () => {
 
       // Small delay to ensure modal is rendered in DOM
       setTimeout(renderTurnstile, 100);
+    } else {
+      // Clear widget when modal closes
+      const widgetElement = document.getElementById('turnstile-widget');
+      if (widgetElement) {
+        widgetElement.innerHTML = '';
+      }
+      setTurnstileWidgetId(null);
     }
-  }, [isModalOpen, turnstileWidgetId]);
+  }, [isModalOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
