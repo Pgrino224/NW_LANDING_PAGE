@@ -1,0 +1,320 @@
+.bounty-leaderboard {
+  min-height: 100vh;
+  padding: 120px 20px 80px;
+  background-color: #0a0a0a;
+}
+
+.bounty-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bounty-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 80px;
+  font-weight: 400;
+  color: #ffffe4;
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+/* Search Bar */
+.bounty-search-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.bounty-search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 12px 16px;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #ffffe4;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.bounty-search-input::placeholder {
+  color: #666;
+}
+
+.bounty-search-input:focus {
+  outline: none;
+  border-color: #ff8480;
+}
+
+.bounty-update-info {
+  font-family: 'GeistMono', monospace;
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Tab Navigation */
+.bounty-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.bounty-tab {
+  padding: 12px 24px;
+  background-color: transparent;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #ffffe4;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bounty-tab:hover {
+  background-color: rgba(255, 132, 128, 0.1);
+  border-color: #ff8480;
+}
+
+.bounty-tab.active {
+  background-color: #ff8480;
+  border-color: #ff8480;
+  color: #0a0a0a;
+}
+
+/* Time Filters */
+.bounty-time-filters {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.time-filter {
+  padding: 8px 16px;
+  background-color: transparent;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ffffe4;
+  font-family: 'GeistMono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-filter:hover {
+  background-color: rgba(255, 132, 128, 0.1);
+  border-color: #ff8480;
+}
+
+.time-filter.active {
+  background-color: #ff8480;
+  border-color: #ff8480;
+  color: #0a0a0a;
+}
+
+/* Table */
+.bounty-table-container {
+  background-color: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.bounty-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bounty-table thead {
+  background-color: #141414;
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.bounty-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-family: 'GeistMono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bounty-table tbody tr {
+  border-bottom: 1px solid #1f1f1f;
+  transition: background-color 0.2s ease;
+}
+
+.bounty-table tbody tr:hover {
+  background-color: rgba(255, 132, 128, 0.05);
+}
+
+.bounty-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.bounty-table td {
+  padding: 20px;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  color: #ffffe4;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #1f1f1f;
+}
+
+.name-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name {
+  font-weight: 600;
+  color: #ffffe4;
+}
+
+.handle {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Pagination */
+.bounty-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.page-arrow,
+.page-number {
+  padding: 8px 12px;
+  background-color: transparent;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ffffe4;
+  font-family: 'GeistMono', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 40px;
+}
+
+.page-arrow:hover,
+.page-number:hover {
+  background-color: rgba(255, 132, 128, 0.1);
+  border-color: #ff8480;
+}
+
+.page-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #333;
+}
+
+.page-arrow:disabled:hover {
+  background-color: transparent;
+  border-color: #333;
+}
+
+.page-number.active {
+  background-color: #ff8480;
+  border-color: #ff8480;
+  color: #0a0a0a;
+}
+
+.page-ellipsis {
+  color: #888;
+  padding: 0 8px;
+  font-family: 'GeistMono', monospace;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .bounty-title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bounty-title {
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
+
+  .bounty-search-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bounty-search-input {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .bounty-update-info {
+    text-align: center;
+  }
+
+  .bounty-tabs {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .bounty-tab {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bounty-time-filters {
+    justify-content: center;
+  }
+
+  .bounty-table-container {
+    overflow-x: auto;
+  }
+
+  .bounty-table {
+    min-width: 800px;
+  }
+
+  .bounty-table th,
+  .bounty-table td {
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+}

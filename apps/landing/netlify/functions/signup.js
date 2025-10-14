@@ -2,8 +2,26 @@ import pkg from 'pg';
 const { Client } = pkg;
 import { Resend } from 'resend'
 import crypto from 'crypto'
+import disposableDomains from 'disposable-email-domains'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+
+// Verify Turnstile token with Cloudflare
+async function verifyTurnstile(token) {
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      secret: process.env.TURNSTILE_SECRET_KEY,
+      response: token,
+    }),
+  });
+
+  const data = await response.json();
+  return data.success;
+}
 
 export async function handler(event, context) {
   // Enable CORS
@@ -30,7 +48,7 @@ export async function handler(event, context) {
   });
 
   try {
-    const { email, referrerXHandle } = JSON.parse(event.body)
+    const { email, referrerXHandle, turnstileToken, timeSpent } = JSON.parse(event.body)
 
     if (!email) {
       return {
@@ -40,17 +58,85 @@ export async function handler(event, context) {
       }
     }
 
+    // Verify Turnstile token
+    if (!turnstileToken) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Security verification is required' })
+      }
+    }
+
+    const isTurnstileValid = await verifyTurnstile(turnstileToken);
+    if (!isTurnstileValid) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Security verification failed. Please try again.' })
+      }
+    }
+
+    // Time-based validation (reject if < 2 seconds or > 30 minutes)
+    if (timeSpent < 2 || timeSpent > 1800) {
+      console.log(`Suspicious timing: ${timeSpent} seconds`);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid submission. Please try again.' })
+      }
+    }
+
+    // Check for disposable email domains
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (disposableDomains.includes(emailDomain)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Disposable email addresses are not allowed' })
+      }
+    }
+
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
+    // Get client IP address
+    const clientIP = event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                     event.headers['x-nf-client-connection-ip'] ||
+                     event.headers['client-ip'] ||
+                     'unknown';
+
     // Connect to database
     await client.connect();
 
-    // Save to Neon database with verification token
+    // Get active bounty event ID
+    const bountyResult = await client.query(
+      'SELECT id FROM bounty_events WHERE is_active = true LIMIT 1'
+    );
+    const activeBountyId = bountyResult.rows.length > 0 ? bountyResult.rows[0].id : null;
+
+    // Check rate limiting - count signups from this IP in the last hour
+    const rateLimitResult = await client.query(
+      `SELECT COUNT(*) as count FROM beta_signups
+       WHERE ip_address = $1
+       AND created_at > NOW() - INTERVAL '1 hour'`,
+      [clientIP]
+    );
+
+    const signupCount = parseInt(rateLimitResult.rows[0]?.count || 0);
+    if (signupCount >= 5) {
+      await client.end();
+      return {
+        statusCode: 429,
+        headers,
+        body: JSON.stringify({ error: 'Too many signup attempts. Please try again later.' })
+      };
+    }
+
+    // Save to Neon database with verification token, IP address, and bounty_event_id
     await client.query(
-      'INSERT INTO beta_signups (email, referrer_x_handle, verification_token, token_expires_at, created_at) VALUES ($1, $2, $3, $4, $5)',
-      [email, referrerXHandle || null, verificationToken, expiresAt.toISOString(), new Date().toISOString()]
+      'INSERT INTO beta_signups (email, referrer_x_handle, verification_token, token_expires_at, ip_address, bounty_event_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [email, referrerXHandle || null, verificationToken, expiresAt.toISOString(), clientIP, activeBountyId, new Date().toISOString()]
     );
 
     await client.end();

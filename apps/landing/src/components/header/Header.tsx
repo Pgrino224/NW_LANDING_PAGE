@@ -1,7 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './Header.css';
+
+// Declare Turnstile on window
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (element: string | HTMLElement, options: {
+        sitekey: string;
+        callback: (token: string) => void;
+        'error-callback'?: () => void;
+      }) => string;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
 
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,15 +25,105 @@ const Header = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [formOpenedAt, setFormOpenedAt] = useState<number>(0);
+  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isNetworthPage = location.pathname === '/networth';
+  const isBountyPage = location.pathname === '/bounty';
+  const isNftPage = location.pathname === '/nft';
+
+  // Load Turnstile script
+  useEffect(() => {
+    // Load Turnstile script if not already loaded
+    if (!document.getElementById('turnstile-script')) {
+      const script = document.createElement('script');
+      script.id = 'turnstile-script';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    // Define global callback
+    (window as any).onTurnstileSuccess = (token: string) => {
+      setTurnstileToken(token);
+    };
+  }, []);
+
+  // Track when modal opens for time-based validation and render Turnstile
+  useEffect(() => {
+    if (isModalOpen) {
+      setFormOpenedAt(Date.now());
+      setTurnstileToken(''); // Reset token when modal opens
+
+      // Wait for modal to be visible, then render Turnstile widget
+      const renderTurnstile = () => {
+        const widgetElement = document.getElementById('turnstile-widget');
+
+        if (widgetElement && window.turnstile) {
+          // Reset previous widget if exists
+          if (turnstileWidgetId) {
+            try {
+              window.turnstile.reset(turnstileWidgetId);
+            } catch (e) {
+              console.log('Turnstile reset failed, will render new widget');
+            }
+          }
+
+          // Render new widget
+          try {
+            const widgetId = window.turnstile.render('#turnstile-widget', {
+              sitekey: '0x4AAAAAAB6j86p5AbmVjVNV',
+              callback: (token: string) => {
+                setTurnstileToken(token);
+              },
+              'error-callback': () => {
+                console.error('Turnstile verification failed');
+                setTurnstileToken('');
+              }
+            });
+            setTurnstileWidgetId(widgetId);
+          } catch (e) {
+            console.error('Failed to render Turnstile:', e);
+          }
+        } else if (widgetElement && !window.turnstile) {
+          // Script not loaded yet, wait a bit and try again
+          setTimeout(renderTurnstile, 100);
+        }
+      };
+
+      // Small delay to ensure modal is rendered in DOM
+      setTimeout(renderTurnstile, 100);
+    }
+  }, [isModalOpen, turnstileWidgetId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
+
+    // Check honeypot field
+    if (honeypot) {
+      setSubmitStatus('error');
+      setErrorMessage('Invalid submission detected.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check Turnstile token
+    if (!turnstileToken) {
+      setSubmitStatus('error');
+      setErrorMessage('Please complete the security verification.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Calculate time spent on form
+    const timeSpent = Math.floor((Date.now() - formOpenedAt) / 1000);
 
     try {
       const response = await fetch('/.netlify/functions/signup', {
@@ -29,7 +133,9 @@ const Header = () => {
         },
         body: JSON.stringify({
           email,
-          referrerXHandle: referrerXHandle || null
+          referrerXHandle: referrerXHandle || null,
+          turnstileToken,
+          timeSpent
         }),
       });
 
@@ -92,6 +198,20 @@ const Header = () => {
                   <button onClick={() => scrollToSection('token')} className="header-nav-link">TOKEN</button>
                   <button onClick={() => scrollToSection('learnwithsyncr')} className="header-nav-link">SYNCR</button>
                   <button onClick={() => scrollToSection('traits')} className="header-nav-link">TRAITS</button>
+                  <button onClick={() => handleNavigateWithCleanup('/bounty')} className="header-nav-link">BOUNTY</button>
+                  <button onClick={() => handleNavigateWithCleanup('/nft')} className="header-nav-link">NFT</button>
+                </>
+              ) : isBountyPage ? (
+                <>
+                  <button onClick={() => handleNavigateWithCleanup('/')} className="header-nav-link">HOME</button>
+                  <button onClick={() => handleNavigateWithCleanup('/networth')} className="header-nav-link">NETWORTH</button>
+                  <button onClick={() => handleNavigateWithCleanup('/nft')} className="header-nav-link">NFT</button>
+                </>
+              ) : isNftPage ? (
+                <>
+                  <button onClick={() => handleNavigateWithCleanup('/')} className="header-nav-link">HOME</button>
+                  <button onClick={() => handleNavigateWithCleanup('/networth')} className="header-nav-link">NETWORTH</button>
+                  <button onClick={() => handleNavigateWithCleanup('/bounty')} className="header-nav-link">BOUNTY</button>
                 </>
               ) : (
                 <>
@@ -100,6 +220,8 @@ const Header = () => {
                   <button onClick={() => scrollToSection('data')} className="header-nav-link">DATA</button>
                   <button onClick={() => scrollToSection('company')} className="header-nav-link">COMPANY</button>
                   <button onClick={() => handleNavigateWithCleanup('/networth')} className="header-nav-link">NETWORTH</button>
+                  <button onClick={() => handleNavigateWithCleanup('/bounty')} className="header-nav-link">BOUNTY</button>
+                  <button onClick={() => handleNavigateWithCleanup('/nft')} className="header-nav-link">NFT</button>
                 </>
               )}
             </nav>
@@ -127,6 +249,20 @@ const Header = () => {
                 <button onClick={() => scrollToSection('token')} className="mobile-nav-link">TOKEN</button>
                 <button onClick={() => scrollToSection('learnwithsyncr')} className="mobile-nav-link">SYNCR</button>
                 <button onClick={() => scrollToSection('traits')} className="mobile-nav-link">TRAITS</button>
+                <button onClick={() => handleNavigateWithCleanup('/bounty')} className="mobile-nav-link">BOUNTY</button>
+                <button onClick={() => handleNavigateWithCleanup('/nft')} className="mobile-nav-link">NFT</button>
+              </>
+            ) : isBountyPage ? (
+              <>
+                <button onClick={() => handleNavigateWithCleanup('/')} className="mobile-nav-link">HOME</button>
+                <button onClick={() => handleNavigateWithCleanup('/networth')} className="mobile-nav-link">NETWORTH</button>
+                <button onClick={() => handleNavigateWithCleanup('/nft')} className="mobile-nav-link">NFT</button>
+              </>
+            ) : isNftPage ? (
+              <>
+                <button onClick={() => handleNavigateWithCleanup('/')} className="mobile-nav-link">HOME</button>
+                <button onClick={() => handleNavigateWithCleanup('/networth')} className="mobile-nav-link">NETWORTH</button>
+                <button onClick={() => handleNavigateWithCleanup('/bounty')} className="mobile-nav-link">BOUNTY</button>
               </>
             ) : (
               <>
@@ -135,6 +271,8 @@ const Header = () => {
                 <button onClick={() => scrollToSection('data')} className="mobile-nav-link">DATA</button>
                 <button onClick={() => scrollToSection('company')} className="mobile-nav-link">COMPANY</button>
                 <button onClick={() => handleNavigateWithCleanup('/networth')} className="mobile-nav-link">NETWORTH</button>
+                <button onClick={() => handleNavigateWithCleanup('/bounty')} className="mobile-nav-link">BOUNTY</button>
+                <button onClick={() => handleNavigateWithCleanup('/nft')} className="mobile-nav-link">NFT</button>
               </>
             )}
             <button onClick={() => { setIsModalOpen(true); setIsMobileMenuOpen(false); }} className="mobile-signup-btn">
@@ -158,6 +296,24 @@ const Header = () => {
             ) : (
               <form onSubmit={handleSubmit} name="signup" data-netlify="true" method="POST">
                 <input type="hidden" name="form-name" value="signup" />
+
+                {/* Honeypot field - hidden from users but bots will fill it */}
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{
+                    position: 'absolute',
+                    left: '-9999px',
+                    width: '1px',
+                    height: '1px',
+                    opacity: 0
+                  }}
+                />
+
                 <input
                   type="email"
                   name="email"
@@ -182,6 +338,13 @@ const Header = () => {
                   style={{ fontFamily: 'GeistMono, monospace', fontWeight: 200 }}
                   disabled={isSubmitting}
                 />
+
+                {/* Turnstile widget - rendered programmatically */}
+                <div
+                  id="turnstile-widget"
+                  style={{ marginTop: '16px', marginBottom: '16px' }}
+                />
+
                 {submitStatus === 'error' && errorMessage && (
                   <div className="modal-error">{errorMessage}</div>
                 )}

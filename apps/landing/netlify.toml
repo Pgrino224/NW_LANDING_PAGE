@@ -2,7 +2,15 @@
   publish = "dist"
   command = "npm run build"
 
+[functions]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Scheduled function to update leaderboard cache every hour
+# Note: Scheduling only works in production, not local dev
+[functions."update-leaderboard-cache"]
+  schedule = "@hourly"
