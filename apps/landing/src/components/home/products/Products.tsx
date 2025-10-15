@@ -21,7 +21,7 @@ const Products = () => {
             </div>
             <div className="bento-card syncr-card">
               <div className="syncr-unicorn-background">
-                <UnicornScene projectId="sPN0wenbjZcGdkLIcS5W" />
+                <UnicornScene projectId="F3a8TBLyfIuuIY7kkHVV" />
               </div>
               <h3 className="bento-title">Syncr</h3>
               <p className="bento-description">Your cosmic guide to help you explore NetWorth and prevail against competition.</p>
