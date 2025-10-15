@@ -120,6 +120,14 @@ const Header = () => {
       return;
     }
 
+    // Validate referrer X handle format if provided
+    if (referrerXHandle && referrerXHandle.trim() && !referrerXHandle.trim().startsWith('@')) {
+      setSubmitStatus('error');
+      setErrorMessage('Referrer handle must start with @ (e.g., @username)');
+      setIsSubmitting(false);
+      return;
+    }
+
     // Calculate time spent on form
     const timeSpent = Math.floor((Date.now() - formOpenedAt) / 1000);
 

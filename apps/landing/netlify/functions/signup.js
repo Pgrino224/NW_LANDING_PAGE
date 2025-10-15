@@ -58,12 +58,22 @@ export async function handler(event, context) {
       }
     }
 
-    // Normalize X handle - remove @ symbol and whitespace, convert to lowercase
+    // Validate and normalize X handle
     let normalizedHandle = null;
     if (referrerXHandle && referrerXHandle.trim()) {
-      normalizedHandle = referrerXHandle.trim().replace(/^@/, '').toLowerCase();
-      // Add @ prefix for consistency
-      normalizedHandle = `@${normalizedHandle}`;
+      const trimmedHandle = referrerXHandle.trim();
+
+      // Validate that handle starts with @
+      if (!trimmedHandle.startsWith('@')) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Referrer handle must start with @ (e.g., @username)' })
+        };
+      }
+
+      // Normalize: remove @ symbol, convert to lowercase, add @ prefix back
+      normalizedHandle = '@' + trimmedHandle.replace(/^@/, '').toLowerCase();
     }
 
     // Verify Turnstile token
