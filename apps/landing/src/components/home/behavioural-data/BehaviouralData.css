@@ -105,15 +105,14 @@
 }
 
 .card-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   color: #ffffe4;
   margin: 0;
-  transform: rotate(90deg);
   white-space: pre-line;
   text-align: center;
   line-height: 1.2;
-  max-width: 280px;
+  max-width: 200px;
 }
 
 .card-description {

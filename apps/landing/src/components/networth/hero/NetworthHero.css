@@ -61,118 +61,53 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding-top: 40px;
-  padding-bottom: 80px;
-}
-
-.networth-hero-top {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.networth-hero-title-left {
-  font-size: 140px;
-  font-weight: 500;
-  color: #ffffef;
-  margin: 0;
-  text-align: left;
-  font-family: 'GeistMono', monospace;
-  align-self: flex-start;
-  letter-spacing: -2px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0 60px 60px;
 }
 
 .networth-hero-subtitle {
   font-size: 24px;
   font-weight: 200;
   color: #ffffef;
-  margin: 0;
-  margin-left: 4px;
+  margin: 0 0 8px 0;
   text-align: left;
-  font-family: 'GeistMono', monospace;
+  font-family: 'Geist', sans-serif;
 }
 
-.networth-hero-title-right {
-  font-size: 140px;
-  font-weight: 500;
-  color: #ffffef;
-  text-align: right;
-  font-family: 'GeistMono', monospace;
-  align-self: flex-end;
-  margin-bottom: 0;
-  letter-spacing: -2px;
+.networth-hero-title {
+  color: #ffffe4;
+  font-size: 240px;
+  margin: 0;
+  margin-left: -16px;
+  line-height: 1;
 }
 
 @media (max-width: 1024px) {
   .networth-hero-content {
-    justify-content: center;
-    align-items: center;
+    padding: 0 40px 40px;
   }
 
-  .networth-hero-top {
-    align-items: center;
-  }
-
-  .networth-hero-title-left {
-    font-size: 110px;
-    text-align: center;
-    align-self: center;
-  }
-
-  .networth-hero-subtitle {
-    text-align: center;
-    margin-left: 0;
-  }
-
-  .networth-hero-title-right {
-    font-size: 110px;
-    text-align: center;
-    align-self: center;
+  .networth-hero-title {
+    font-size: 200px;
   }
 }
 
 @media (max-width: 768px) {
-  .networth-hero-title-left {
-    font-size: 80px;
-    text-align: center;
-    align-self: center;
+  .networth-hero-content {
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
   }
 
-  .networth-hero-title-right {
+  .networth-hero-title {
     font-size: 80px;
     text-align: center;
-    align-self: center;
   }
 
   .networth-hero-subtitle {
     font-size: 20px;
     text-align: center;
-    margin-left: 0;
   }
 }
 
-@media (max-width: 480px) {
-  .networth-hero-content {
-    padding-top: 20px;
-    padding-bottom: 60px;
-  }
-
-  .networth-hero-title-left {
-    font-size: 40px;
-    text-align: center;
-    align-self: center;
-  }
-
-  .networth-hero-title-right {
-    font-size: 40px;
-    text-align: center;
-    align-self: center;
-  }
-
-  .networth-hero-subtitle {
-    font-size: 16px;
-    text-align: center;
-    margin-left: 0;
-  }
-}
