@@ -14,7 +14,7 @@ export async function handler(event, context) {
 
     // Get active bounty event
     const bountyResult = await client.query(
-      'SELECT id, scoring_config, start_date FROM bounty_events WHERE is_active = true LIMIT 1'
+      'SELECT id, scoring_config, start_date, bounty_post_id FROM bounty_events WHERE is_active = true LIMIT 1'
     );
 
     if (bountyResult.rows.length === 0) {
@@ -28,14 +28,27 @@ export async function handler(event, context) {
     const activeBounty = bountyResult.rows[0];
     const scoringConfig = activeBounty.scoring_config;
     const bountyStartDate = activeBounty.start_date;
+    const bountyPostId = activeBounty.bounty_post_id;
 
     console.log('Processing bounty:', activeBounty.id);
     console.log('Scoring config:', scoringConfig);
+    console.log('Bounty post ID:', bountyPostId || 'Not set');
 
-    // Bounty post ID searching disabled for now
-    // TODO: Re-enable when we need to track engagement on specific bounty posts
-    const bountyPostId = null;
-    console.log('Bounty post ID search disabled - processing signups and community joins only');
+    // Process comment mentions if bounty post ID is configured
+    if (bountyPostId && scoringConfig.comment_mentions) {
+      console.log('=== COMMENT MENTIONS PROCESSING START ===');
+      console.log('Bounty Post ID:', bountyPostId);
+      console.log('Scoring Config:', JSON.stringify(scoringConfig));
+      await processMentions(client, activeBounty.id, bountyPostId);
+      console.log('=== COMMENT MENTIONS PROCESSING END ===');
+    } else {
+      if (!bountyPostId) {
+        console.log('⚠️ No bounty_post_id configured - skipping mention processing');
+      }
+      if (!scoringConfig.comment_mentions) {
+        console.log('⚠️ comment_mentions not in scoring_config - skipping mention processing');
+      }
+    }
 
     // Get all unique referrer handles from various sources (normalized to lowercase with @ prefix)
     const referrersResult = await client.query(`
@@ -73,7 +86,8 @@ export async function handler(event, context) {
         comments: 0,
         community_joins: 0,
         referral_signups: 0,
-        posts: 0
+        posts: 0,
+        comment_mentions: 0
       };
 
       // Fetch display name from X API
@@ -105,6 +119,16 @@ export async function handler(event, context) {
         );
         breakdown.community_joins = parseInt(joinsResult.rows[0].count);
         totalScore += breakdown.community_joins * scoringConfig.community_joins;
+      }
+
+      // Count unique comment mentions for this bounty (case-insensitive match)
+      if (scoringConfig.comment_mentions) {
+        const mentionsResult = await client.query(
+          'SELECT COUNT(DISTINCT mentioner_handle) as count FROM processed_comments WHERE LOWER(mentioned_handle) = LOWER($1) AND bounty_event_id = $2',
+          [referrerHandle, activeBounty.id]
+        );
+        breakdown.comment_mentions = parseInt(mentionsResult.rows[0].count);
+        totalScore += breakdown.comment_mentions * scoringConfig.comment_mentions;
       }
 
       // Fetch X engagement data if needed and bounty post exists
@@ -171,6 +195,199 @@ export async function handler(event, context) {
         details: error.message
       })
     };
+  }
+}
+
+// Fetch all followers of @acepyr_ and cache them
+async function fetchAcepyrFollowers() {
+  const BEARER_TOKEN = process.env.X_BEARER_TOKEN;
+
+  try {
+    // Get @acepyr_ user ID
+    const acepyrResponse = await fetch('https://api.twitter.com/2/users/by/username/acepyr_', {
+      headers: { 'Authorization': `Bearer ${BEARER_TOKEN}` }
+    });
+
+    if (!acepyrResponse.ok) {
+      console.error('Failed to fetch @acepyr_ user info');
+      return new Set();
+    }
+
+    const acepyrData = await acepyrResponse.json();
+    const acepyrUserId = acepyrData.data?.id;
+
+    if (!acepyrUserId) {
+      console.error('@acepyr_ user ID not found');
+      return new Set();
+    }
+
+    // Fetch followers (first 1000 - adjust if needed)
+    const followersResponse = await fetch(
+      `https://api.twitter.com/2/users/${acepyrUserId}/followers?max_results=1000`,
+      {
+        headers: { 'Authorization': `Bearer ${BEARER_TOKEN}` }
+      }
+    );
+
+    if (!followersResponse.ok) {
+      console.error('Failed to fetch @acepyr_ followers');
+      return new Set();
+    }
+
+    const followersData = await followersResponse.json();
+    const followerIds = new Set();
+
+    if (followersData.data) {
+      for (const follower of followersData.data) {
+        followerIds.add(follower.id);
+      }
+    }
+
+    console.log(`Cached ${followerIds.size} followers of @acepyr_`);
+    return followerIds;
+  } catch (error) {
+    console.error('Error fetching @acepyr_ followers:', error);
+    return new Set();
+  }
+}
+
+// Process mentions from bounty post comments
+async function processMentions(client, bountyEventId, bountyPostId) {
+  const BEARER_TOKEN = process.env.X_BEARER_TOKEN;
+
+  try {
+    console.log('📝 Fetching @acepyr_ followers...');
+    // Fetch @acepyr_ followers once at the beginning
+    const acepyrFollowers = await fetchAcepyrFollowers();
+
+    if (acepyrFollowers.size === 0) {
+      console.log('⚠️ No followers found for @acepyr_, skipping follower validation');
+    } else {
+      console.log(`✅ Cached ${acepyrFollowers.size} @acepyr_ followers`);
+    }
+
+    // Fetch conversation thread (all replies to the bounty post)
+    // Using search API to find replies since basic API v2 doesn't support direct reply fetching
+    const searchQuery = `conversation_id:${bountyPostId}`;
+    const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=100&tweet.fields=created_at,author_id&expansions=author_id&user.fields=username,created_at`;
+
+    console.log('🔍 Fetching comments from X API...');
+    console.log('Search query:', searchQuery);
+    console.log('URL:', url);
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${BEARER_TOKEN}` }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Failed to fetch bounty post comments');
+      console.error('Status:', response.status);
+      console.error('Response:', errorText);
+      return;
+    }
+
+    const data = await response.json();
+    console.log('📊 X API Response:', JSON.stringify(data, null, 2));
+
+    if (!data.data || data.data.length === 0) {
+      console.log('⚠️ No comments found for bounty post');
+      return;
+    }
+
+    console.log(`✅ Found ${data.data.length} comments/replies`);
+
+    // Create a map of author_id to user info
+    const userMap = {};
+    if (data.includes && data.includes.users) {
+      for (const user of data.includes.users) {
+        userMap[user.id] = user;
+      }
+    }
+
+    let processedCount = 0;
+    let skippedCount = 0;
+
+    // Process each comment
+    for (const tweet of data.data) {
+      const commentId = tweet.id;
+      const authorId = tweet.author_id;
+      const commentText = tweet.text;
+
+      // Check if already processed
+      const existingCheck = await client.query(
+        'SELECT id FROM processed_comments WHERE comment_id = $1',
+        [commentId]
+      );
+
+      if (existingCheck.rows.length > 0) {
+        skippedCount++;
+        continue;
+      }
+
+      // Get author info
+      const author = userMap[authorId];
+      if (!author) {
+        console.log(`Author info not found for comment ${commentId}`);
+        continue;
+      }
+
+      const mentionerHandle = `@${author.username.toLowerCase()}`;
+      const mentionerId = author.id;
+
+      // Check account age (must be >3 days old)
+      const accountCreatedAt = new Date(author.created_at);
+      const accountAgeDays = Math.floor((Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (accountAgeDays < 3) {
+        console.log(`Skipping ${mentionerHandle} - account too young (${accountAgeDays} days)`);
+        skippedCount++;
+        continue;
+      }
+
+      // Check if user follows @acepyr_ (using cached follower set)
+      if (acepyrFollowers.size > 0 && !acepyrFollowers.has(mentionerId)) {
+        console.log(`Skipping ${mentionerHandle} - not following @acepyr_`);
+        skippedCount++;
+        continue;
+      }
+
+      // Extract @mentions from comment text
+      const mentionRegex = /@(\w+)/g;
+      const mentions = [];
+      let match;
+
+      while ((match = mentionRegex.exec(commentText)) !== null) {
+        const mentionedHandle = `@${match[1].toLowerCase()}`;
+        // Don't count self-mentions
+        if (mentionedHandle !== mentionerHandle) {
+          mentions.push(mentionedHandle);
+        }
+      }
+
+      // Store each unique mention
+      for (const mentionedHandle of [...new Set(mentions)]) {
+        try {
+          await client.query(
+            'INSERT INTO processed_comments (comment_id, bounty_event_id, mentioner_handle, mentioned_handle, account_age_days, comment_text, processed_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [commentId, bountyEventId, mentionerHandle, mentionedHandle, accountAgeDays, commentText, new Date().toISOString()]
+          );
+          processedCount++;
+        } catch (error) {
+          if (error.code === '23505') {
+            // Duplicate entry, skip
+            skippedCount++;
+          } else {
+            console.error(`Error storing mention ${mentionerHandle} -> ${mentionedHandle}:`, error.message);
+          }
+        }
+      }
+    }
+
+    console.log(`✅ Processed ${processedCount} new mentions, skipped ${skippedCount}`);
+  } catch (error) {
+    console.error('❌ Error processing mentions:', error);
+    console.error('Error stack:', error.stack);
   }
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './BountyLeaderboard.css';
 
-type TabType = 'score' | 'signups' | 'engagement' | 'posts';
+type TabType = 'score' | 'signups' | 'mentions';
 
 interface LeaderboardEntry {
   rank: number;
@@ -9,6 +9,7 @@ interface LeaderboardEntry {
   handle: string;
   signups: number;
   communityJoins: number;
+  mentions: number;
   posts: number;
   likes: number;
   retweets: number;
@@ -74,10 +75,8 @@ const BountyLeaderboard = () => {
         return data.sort((a, b) => b.score - a.score);
       case 'signups':
         return data.sort((a, b) => b.signups - a.signups);
-      case 'engagement':
-        return data.sort((a, b) => b.totalEngagement - a.totalEngagement);
-      case 'posts':
-        return data.sort((a, b) => b.posts - a.posts);
+      case 'mentions':
+        return data.sort((a, b) => b.mentions - a.mentions);
       default:
         return data;
     }
@@ -178,16 +177,10 @@ const BountyLeaderboard = () => {
             Signups
           </button>
           <button
-            className={`bounty-tab ${activeTab === 'engagement' ? 'active' : ''}`}
-            onClick={() => setActiveTab('engagement')}
+            className={`bounty-tab ${activeTab === 'mentions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mentions')}
           >
-            Engagement
-          </button>
-          <button
-            className={`bounty-tab ${activeTab === 'posts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('posts')}
-          >
-            Posts
+            Mentions
           </button>
         </div>
 
@@ -216,8 +209,7 @@ const BountyLeaderboard = () => {
                   <th>Rank #</th>
                   <th>Name</th>
                   <th>Signups</th>
-                  <th>Community Joins</th>
-                  <th>Engagement</th>
+                  <th>Mentions</th>
                   <th>Score</th>
                 </tr>
               </thead>
@@ -240,8 +232,7 @@ const BountyLeaderboard = () => {
                       </div>
                     </td>
                     <td>{entry.signups.toLocaleString()}</td>
-                    <td>{entry.communityJoins.toLocaleString()}</td>
-                    <td>{entry.totalEngagement.toLocaleString()}</td>
+                    <td>{entry.mentions.toLocaleString()}</td>
                     <td>{entry.score.toLocaleString()}</td>
                   </tr>
                 ))}

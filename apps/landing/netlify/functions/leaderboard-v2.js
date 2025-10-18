@@ -70,6 +70,7 @@ export async function handler(event, context) {
         score: row.score,
         signups: breakdown.referral_signups || 0,
         communityJoins: breakdown.community_joins || 0,
+        mentions: breakdown.comment_mentions || 0,
         likes: breakdown.likes || 0,
         retweets: breakdown.retweets || 0,
         replies: breakdown.comments || 0,

@@ -22,7 +22,16 @@
       "Bash(turbo build:*)",
       "Bash(pnpm remove:*)",
       "Bash(pnpm add:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx netlify:*)",
+      "Bash(curl -s \"http://localhost:60471/.netlify/functions/leaderboard?period=current\")",
+      "Bash(curl -s \"http://localhost:8888/.netlify/functions/leaderboard-v2?period=current\")",
+      "Bash(awk 'BEGIN {counter=101} {print \"\"\"\"mv \\\"\"\"\"\"\"\"\"$0\"\"\"\"\\\"\"\"\" NW\"\"\"\"counter\"\"\"\".webp\"\"\"\"; counter++}')",
+      "Bash(bash)",
+      "Bash(npm run build:*)",
+      "Bash(curl -s \"https://challenges.cloudflare.com/turnstile/v0/api.js\")",
+      "Bash(rm:*)",
+      "Bash(do sed -i \"s|from ''./NetworthIcon''|from ''../shared/NetworthIcon''|g\" \"$file\")"
     ],
     "deny": [],
     "ask": []
