@@ -61,6 +61,8 @@ export async function handler(event, context) {
         SELECT referrer_x_handle FROM beta_signups WHERE referrer_x_handle IS NOT NULL
         UNION
         SELECT referrer_x_handle FROM community_joins WHERE referrer_x_handle IS NOT NULL
+        UNION
+        SELECT mentioned_handle as referrer_x_handle FROM processed_comments WHERE mentioned_handle IS NOT NULL
       ) AS all_referrers
       WHERE referrer_x_handle != ''
     `);
