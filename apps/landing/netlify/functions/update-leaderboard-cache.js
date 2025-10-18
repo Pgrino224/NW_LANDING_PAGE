@@ -322,18 +322,20 @@ async function processMentions(client, bountyEventId, bountyPostId) {
       return;
     }
 
-    // Filter to only include tweets that are replies to the specific bounty post
+    // Filter to only include tweets that are DIRECT replies to the specific bounty post
+    // NOT replies to other people's comments in the thread
     const relevantReplies = data.data.filter(tweet => {
-      // Check if this tweet references our bounty post
-      if (tweet.referenced_tweets) {
-        return tweet.referenced_tweets.some(ref =>
-          (ref.type === 'replied_to' || ref.type === 'quoted') && ref.id === bountyPostId
-        );
+      // Check if this tweet is a DIRECT reply to our bounty post
+      if (tweet.referenced_tweets && tweet.referenced_tweets.length > 0) {
+        // The first referenced tweet should be the direct reply
+        const directReply = tweet.referenced_tweets[0];
+        // MUST be a direct reply (not quote) AND MUST be to the bounty post
+        return directReply.type === 'replied_to' && directReply.id === bountyPostId;
       }
       return false;
     });
 
-    console.log(`✅ Found ${data.data.length} total replies to @acepyr_, ${relevantReplies.length} are replies to bounty post ${bountyPostId}`);
+    console.log(`✅ Found ${data.data.length} total replies to @acepyr_, ${relevantReplies.length} are DIRECT replies to bounty post ${bountyPostId}`);
 
     if (relevantReplies.length === 0) {
       console.log('⚠️ No comments found specifically for bounty post');
@@ -399,12 +401,29 @@ async function processMentions(client, bountyEventId, bountyPostId) {
       }
 
       // Extract @mentions from comment text
+      // IMPORTANT: Exclude the reply-to mention (@acepyr_)
+      // When someone replies to @acepyr_, the first @acepyr_ is automatic (the reply target)
+      // Only count @mentions that appear AFTER the reply-to mention
+
       const mentionRegex = /@(\w+)/g;
-      const mentions = [];
+      const allMentions = [];
       let match;
 
       while ((match = mentionRegex.exec(commentText)) !== null) {
-        const mentionedHandle = `@${match[1].toLowerCase()}`;
+        allMentions.push(`@${match[1].toLowerCase()}`);
+      }
+
+      // Remove the first @acepyr_ mention (the reply-to target)
+      const mentions = [];
+      let acepyrSkipped = false;
+
+      for (const mentionedHandle of allMentions) {
+        // Skip the first @acepyr_ (reply-to target)
+        if (mentionedHandle === '@acepyr_' && !acepyrSkipped) {
+          acepyrSkipped = true;
+          continue;
+        }
+
         // Don't count self-mentions
         if (mentionedHandle !== mentionerHandle) {
           mentions.push(mentionedHandle);
