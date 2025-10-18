@@ -267,11 +267,34 @@ async function processMentions(client, bountyEventId, bountyPostId) {
     }
 
     // Fetch conversation thread (all replies to the bounty post)
-    // Using search API to find replies since basic API v2 doesn't support direct reply fetching
-    const searchQuery = `conversation_id:${bountyPostId}`;
-    const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=100&tweet.fields=created_at,author_id&expansions=author_id&user.fields=username,created_at`;
+    // X API Basic tier limitation: conversation_id operator might not be available
+    // Alternative: Search for replies to @acepyr_ mentioning the post
 
-    console.log('🔍 Fetching comments from X API...');
+    // First, try to get the original tweet to confirm it exists
+    console.log('🔍 Step 1: Fetching original tweet...');
+    const tweetUrl = `https://api.twitter.com/2/tweets/${bountyPostId}?tweet.fields=created_at,conversation_id,author_id`;
+
+    const tweetResponse = await fetch(tweetUrl, {
+      headers: { 'Authorization': `Bearer ${BEARER_TOKEN}` }
+    });
+
+    if (!tweetResponse.ok) {
+      const errorText = await tweetResponse.text();
+      console.error('❌ Failed to fetch original tweet');
+      console.error('Status:', tweetResponse.status);
+      console.error('Response:', errorText);
+      return;
+    }
+
+    const tweetData = await tweetResponse.json();
+    console.log('✅ Original tweet found:', JSON.stringify(tweetData, null, 2));
+
+    // Now fetch replies using search API with to:acepyr_
+    // This searches for tweets mentioning @acepyr_ which are more likely to be replies
+    console.log('🔍 Step 2: Searching for replies to @acepyr_...');
+    const searchQuery = `to:acepyr_`;
+    const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(searchQuery)}&max_results=100&tweet.fields=created_at,author_id,referenced_tweets,in_reply_to_user_id&expansions=author_id,referenced_tweets.id&user.fields=username,created_at`;
+
     console.log('Search query:', searchQuery);
     console.log('URL:', url);
 
@@ -281,21 +304,44 @@ async function processMentions(client, bountyEventId, bountyPostId) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Failed to fetch bounty post comments');
+      console.error('❌ Failed to fetch replies');
       console.error('Status:', response.status);
       console.error('Response:', errorText);
       return;
     }
 
     const data = await response.json();
-    console.log('📊 X API Response:', JSON.stringify(data, null, 2));
+    console.log('📊 Search API Response (first 5 tweets):', JSON.stringify({
+      meta: data.meta,
+      data: data.data?.slice(0, 5),
+      includes: data.includes
+    }, null, 2));
 
     if (!data.data || data.data.length === 0) {
-      console.log('⚠️ No comments found for bounty post');
+      console.log('⚠️ No replies found to @acepyr_');
       return;
     }
 
-    console.log(`✅ Found ${data.data.length} comments/replies`);
+    // Filter to only include tweets that are replies to the specific bounty post
+    const relevantReplies = data.data.filter(tweet => {
+      // Check if this tweet references our bounty post
+      if (tweet.referenced_tweets) {
+        return tweet.referenced_tweets.some(ref =>
+          (ref.type === 'replied_to' || ref.type === 'quoted') && ref.id === bountyPostId
+        );
+      }
+      return false;
+    });
+
+    console.log(`✅ Found ${data.data.length} total replies to @acepyr_, ${relevantReplies.length} are replies to bounty post ${bountyPostId}`);
+
+    if (relevantReplies.length === 0) {
+      console.log('⚠️ No comments found specifically for bounty post');
+      return;
+    }
+
+    // Use the filtered replies instead of all data
+    data.data = relevantReplies;
 
     // Create a map of author_id to user info
     const userMap = {};
