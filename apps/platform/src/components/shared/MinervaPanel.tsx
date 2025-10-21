@@ -141,7 +141,7 @@ export default function MinervaPanel({ isOpen, onToggle, messagesHeight }: Miner
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ height: 'calc(100% - 240px)' }}>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 space-y-4" style={{ height: 'calc(100% - 240px)' }}>
           {chatMessages.map((message) => (
             <div
               key={message.id}

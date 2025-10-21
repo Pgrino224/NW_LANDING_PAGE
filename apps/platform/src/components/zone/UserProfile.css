@@ -1,0 +1,346 @@
+.user-profile {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #FFFFE4;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Banner Section */
+.profile-banner {
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.banner-img {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background-color: #e8e8e8;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+}
+
+.profile-pic {
+  width: 120px;
+  height: 120px;
+  background-color: #f0f0f0;
+  border: 4px solid #FFFFE4;
+  border-radius: 8px;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  flex: 1;
+}
+
+.profile-username {
+  font-family: 'Geist', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin: 0;
+}
+
+.profile-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #666;
+  margin: 4px 0 0 0;
+}
+
+/* Back Button */
+.profile-back-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0a0a0a;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.profile-back-btn:hover {
+  background-color: rgba(255, 255, 255, 1);
+  border-color: #0a0a0a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-back-btn svg {
+  flex-shrink: 0;
+}
+
+.profile-friend-btn {
+  align-self: flex-end;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  margin-bottom: 8px;
+}
+
+.profile-friend-btn.none {
+  background-color: #ff8480;
+  color: #ffffff;
+}
+
+.profile-friend-btn.none:hover {
+  background-color: #ff6b66;
+}
+
+.profile-friend-btn.pending {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #d4d4d4;
+}
+
+.profile-friend-btn.pending:hover {
+  background-color: #e5e5e5;
+}
+
+.profile-friend-btn.friends {
+  background-color: #23a55a;
+  color: #ffffff;
+}
+
+.profile-friend-btn.friends:hover {
+  background-color: #1e8e4f;
+}
+
+/* Content Section */
+.profile-content {
+  display: grid;
+  grid-template-columns: 400px 1fr 400px;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Section Titles */
+.section-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0a0a0a;
+  margin: 0 0 16px 0;
+}
+
+/* Archetype Section */
+.archetype-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.archetype-image {
+  width: 400px;
+  height: 400px;
+  background-color: #e8e8e8;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+}
+
+/* Middle Section */
+.middle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Token Balances */
+.token-balances {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.token-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.token-icon {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.token-value {
+  font-family: 'Geist', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0a0a0a;
+}
+
+/* Module Stats */
+.module-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 16px 20px;
+  transition: all 0.2s;
+}
+
+.stat-card:not(.stat-card-header):hover {
+  background-color: rgba(10, 10, 10, 0.02);
+  border-color: #d4d4d4;
+}
+
+.stat-card-header {
+  background-color: #f8f8f8;
+  font-weight: 600;
+  color: #666;
+}
+
+.stat-mode {
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  color: #0a0a0a;
+  flex: 1;
+}
+
+.stat-hours {
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  color: #0a0a0a;
+  flex: 1;
+  text-align: center;
+}
+
+.stat-winrate {
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  color: #0a0a0a;
+  flex: 1;
+  text-align: right;
+}
+
+.stat-card-header .stat-mode,
+.stat-card-header .stat-hours,
+.stat-card-header .stat-winrate {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Traits Section */
+.traits-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trait-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 6px;
+  transition: all 0.2s;
+  overflow: hidden;
+  height: 40px;
+}
+
+.trait-card:hover {
+  background-color: rgba(10, 10, 10, 0.02);
+  border-color: #d4d4d4;
+}
+
+.trait-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+}
+
+.trait-name {
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a0a0a;
+  text-transform: uppercase;
+  position: absolute;
+  left: 64px;
+  z-index: 1;
+}
+
+.trait-bar {
+  position: absolute;
+  top: 0;
+  left: 56px;
+  bottom: 0;
+  right: 60px;
+  z-index: 0;
+}
+
+.trait-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #ff8480, #ff6b66);
+  transition: width 0.3s ease;
+}
+
+.trait-level {
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  position: absolute;
+  right: 16px;
+  z-index: 1;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .archetype-section {
+    order: 1;
+  }
+
+  .middle-section {
+    order: 2;
+  }
+
+  .traits-section {
+    order: 3;
+  }
+}

@@ -1,7 +1,6 @@
 import { ReactNode, useState } from 'react'
 import Watchlist from './Watchlist'
-import type { Token } from './mockData'
-import { mockTokens } from './mockData'
+import type { Token } from '../../services/api/dioneApi'
 
 interface DioneDashboardLayoutProps {
   children: ReactNode
@@ -18,21 +17,33 @@ export default function DioneDashboardLayout({ children, tokens: initialTokens }
     }
   }
 
+  const handleRemoveToken = (token: Token) => {
+    setWatchlistTokens(watchlistTokens.filter(t => t.symbol !== token.symbol))
+  }
+
   return (
-    <div className="w-full h-screen grid" style={{
-      gridTemplateColumns: '4fr 1fr',
-      gap: '0'
-    }}>
+    <div
+      className="w-full h-screen grid"
+      style={{
+        gridTemplateColumns: '4fr 1fr',
+        gap: '0',
+        backgroundImage: 'url(/dione/dione-bg/dione-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       {/* Main content area - 80% */}
-      <div className="h-full overflow-auto bg-[#0a0a0a]">
+      <div className="h-full overflow-auto custom-scrollbar">
         {children}
       </div>
 
       {/* Watchlist - 20% */}
       <Watchlist
         tokens={watchlistTokens}
-        allTokens={mockTokens}
+        allTokens={initialTokens}
         onAddToken={handleAddToken}
+        onRemoveToken={handleRemoveToken}
       />
     </div>
   )

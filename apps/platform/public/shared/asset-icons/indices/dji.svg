@@ -1,0 +1,4 @@
+&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"&gt;
+  &lt;circle cx="50" cy="50" r="50" fill="#2E5C8A"/&gt;
+  &lt;text x="50" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white"&gt;DJI&lt;/text&gt;
+&lt;/svg&gt;

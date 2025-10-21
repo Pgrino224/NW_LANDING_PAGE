@@ -50,11 +50,17 @@ export default function MessagesPanel({ isOpen, onToggle }: MessagesPanelProps) 
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-1 hover:bg-white/10 rounded transition-colors">
+          <div
+            className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation()
+              // Handle menu action
+            }}
+          >
             <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
-          </button>
+          </div>
           <svg
             className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
@@ -70,7 +76,7 @@ export default function MessagesPanel({ isOpen, onToggle }: MessagesPanelProps) 
       {isOpen && (
         <div className="flex flex-col h-[calc(100%-48px)]">
           {/* Messages List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {mockMessages.map((message) => (
               <button
                 key={message.id}

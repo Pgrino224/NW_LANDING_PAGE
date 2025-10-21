@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { mockThemisApi } from '../../services/mockThemisApi'
-import type { Market } from '../../services/mockThemisApi'
+import { themisApi } from '../../services/api/themisApi'
+import type { Market } from '../../services/api/themisApi'
 import Themis2Options from './Themis2Options'
 import ThemisMultiOptions from './ThemisMultiOptions'
 
@@ -18,7 +18,7 @@ export default function ThemisMarketDetail() {
       }
 
       try {
-        const marketData = await mockThemisApi.getMarketByQuestionSlug(question)
+        const marketData = await themisApi.getMarketByQuestionSlug(question)
         setMarket(marketData || null)
       } catch (error) {
         console.error('Error fetching market:', error)

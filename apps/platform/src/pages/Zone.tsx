@@ -1,14 +1,14 @@
+import SectionNavigation from '../components/shared/SectionNavigation'
+import Skynet from '../components/zone/Skynet'
+import Trinet from '../components/zone/Trinet'
+import Valnet from '../components/zone/Valnet'
+
 export default function Zone() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#1a1a1a',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      color: 'white'
-    }}>
-      <h1>Zone</h1>
-    </div>
-  )
+  const sections = [
+    <Skynet key="skynet" />,
+    <Trinet key="trinet" />,
+    <Valnet key="valnet" />
+  ]
+
+  return <SectionNavigation sections={sections} />
 }

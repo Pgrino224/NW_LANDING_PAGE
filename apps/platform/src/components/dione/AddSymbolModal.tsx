@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Token } from './mockData'
+import type { Token } from '../../services/api/dioneApi'
 
 interface AddSymbolModalProps {
   isOpen: boolean
@@ -58,7 +58,7 @@ export default function AddSymbolModal({ isOpen, onClose, availableTokens, onAdd
       />
 
       {/* Modal */}
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <h2 className="text-white font-geist text-lg">Add symbol</h2>
@@ -89,7 +89,7 @@ export default function AddSymbolModal({ isOpen, onClose, availableTokens, onAdd
         </div>
 
         {/* Category Filters */}
-        <div className="px-6 py-3 border-b border-white/10 flex gap-2 overflow-x-auto">
+        <div className="px-6 py-3 border-b border-white/10 flex gap-2 overflow-x-auto custom-scrollbar">
           {filterCategories.map(({ key, label }) => (
             <button
               key={key}
@@ -109,7 +109,7 @@ export default function AddSymbolModal({ isOpen, onClose, availableTokens, onAdd
         </div>
 
         {/* Token List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {filteredTokens.length === 0 ? (
             <div className="flex items-center justify-center h-40">
               <p className="text-white/40 font-geist-mono-extralight text-sm">No symbols found</p>

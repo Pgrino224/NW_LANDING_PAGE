@@ -1,18 +1,19 @@
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import type { Market } from '../../services/mockThemisApi'
+import type { Market, Comment as ApiComment, Holder, ActivityItem, HoldersResponse, MarketOption } from '../../services/api/themisApi'
+import { themisApi } from '../../services/api/themisApi'
+import { useBalance } from '../../contexts/BalanceContext'
+import Dropdown from '../shared/Dropdown'
+import MultiLineChartThemis from '../charts/MultiLineChartThemis'
+import AreaChartThemis from '../charts/AreaChartThemis'
+import OrderBookTable from '../shared/OrderBookTable'
+import { mockMultiOptionPriceHistory } from '../../data/mockChartData'
+import StatusModal from '../common/StatusModal'
+import { useSavedMarkets } from '../../contexts/SavedMarketsContext'
+import NetworthIcon from '../shared/NetworthIcon'
 
 interface ThemisMultiOptionsProps {
   market?: Market
-}
-
-interface Comment {
-  id: number
-  user: string
-  position: string
-  timestamp: string
-  text: string
-  likes: number
 }
 
 interface Candidate {
@@ -26,124 +27,394 @@ interface Candidate {
   avatar?: string
 }
 
-export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) {
+export default function ThemisMultiOptions({ market: propMarket }: ThemisMultiOptionsProps) {
   const navigate = useNavigate()
-  const { category, question } = useParams()
+  const { refreshBalance } = useBalance()
+  const params = useParams<{ category: string; questionSlug: string }>()
+
+  const [market, setMarket] = useState<Market | null>(propMarket || null)
+  const [loading, setLoading] = useState(!propMarket)
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy')
-  const [selectedCandidate, setSelectedCandidate] = useState<string>('Zohran Mamdani')
+  const [selectedCandidateId, setSelectedCandidateId] = useState<number>(1)
+  const [expandedCandidateId, setExpandedCandidateId] = useState<number | null>(1)
+  const [outcomeDetailTab, setOutcomeDetailTab] = useState<'orderbook' | 'graph'>('orderbook')
   const [selectedOption, setSelectedOption] = useState<'yes' | 'no'>('yes')
   const [betAmount, setBetAmount] = useState(0)
   const [commentsTab, setCommentsTab] = useState<'comments' | 'holders' | 'activity'>('comments')
   const [sortBy, setSortBy] = useState('newest')
   const [relatedTab, setRelatedTab] = useState('all')
+  const [holdersCandidate, setHoldersCandidate] = useState<string>('')
+  const [activityCandidate, setActivityCandidate] = useState<string>('All')
+  const [activityMinAmount, setActivityMinAmount] = useState<string>('All')
+  const [chartTimeInterval, setChartTimeInterval] = useState('1M')
+  const [isTrading, setIsTrading] = useState(false)
+  const [comments, setComments] = useState<ApiComment[]>([])
+  const [newCommentText, setNewCommentText] = useState('')
+  const [holdersOnly, setHoldersOnly] = useState(false)
+  const [userBalance, setUserBalance] = useState(0)
+  const [relatedMarkets, setRelatedMarkets] = useState<Market[]>([])
+  const [holders, setHolders] = useState<HoldersResponse>({ marketId: 0, yes: [], no: [] })
+  const [activity, setActivity] = useState<ActivityItem[]>([])
+  const { toggleSaveMarket, isSaved } = useSavedMarkets()
 
-  // Mock data - will be replaced with actual API call
-  const mockMarket: Market = market || {
-    id: 1,
-    category: 'politics',
-    question: 'New York City Mayoral Election',
-    type: 'multi-option',
-    volume: '$127,271,974'
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean
+    type: 'success' | 'error'
+    title: string
+    message: string
+  }>({ isOpen: false, type: 'success', title: '', message: '' })
+
+  // CRITICAL: Generate candidates from market.options
+  const candidates = useMemo(() => {
+    if (!market || !market.options) return []
+
+    return market.options.map((option) => ({
+      id: option.id || 0,
+      name: option.name,
+      percentage: option.percentage,
+      trend: option.trend || '',
+      volume: option.volume || '$0',
+      buyYesPrice: option.buyYesPrice || '0¢',
+      buyNoPrice: option.buyNoPrice || '0¢'
+    }))
+  }, [market])
+
+  // Set initial holdersCandidate when candidates load
+  useEffect(() => {
+    if (candidates.length > 0 && !holdersCandidate) {
+      setHoldersCandidate(candidates[0].name)
+    }
+  }, [candidates, holdersCandidate])
+
+  // Load market from API if not provided via props
+  useEffect(() => {
+    if (propMarket) {
+      setMarket(propMarket)
+      setLoading(false)
+      return
+    }
+
+    const loadMarket = async () => {
+      if (!params.questionSlug) return
+
+      try {
+        const loadedMarket = await themisApi.getMarketByQuestionSlug(params.questionSlug)
+        setMarket(loadedMarket || null)
+      } catch (error) {
+        console.error('Error loading market:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMarket()
+  }, [propMarket, params.questionSlug])
+
+  useEffect(() => {
+    const loadComments = async () => {
+      if (!market) return
+      try {
+        const marketComments = await themisApi.getComments(market.id)
+        setComments(marketComments)
+      } catch (error) {
+        console.error('Error loading comments:', error)
+      }
+    }
+    loadComments()
+  }, [market?.id])
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      try {
+        const balance = await themisApi.getUserBalance()
+        setUserBalance(balance.networth)
+      } catch (error) {
+        console.error('Error loading balance:', error)
+      }
+    }
+    loadBalance()
+  }, [])
+
+  useEffect(() => {
+    const loadRelatedMarkets = async () => {
+      if (!market) return
+      try {
+        const allMarkets = await themisApi.getMarkets()
+        // Filter by same category, exclude current market
+        const filtered = allMarkets.filter(m =>
+          m.category === market.category && m.id !== market.id
+        )
+        setRelatedMarkets(filtered)
+      } catch (error) {
+        console.error('Error loading related markets:', error)
+      }
+    }
+    loadRelatedMarkets()
+  }, [market?.id, market?.category])
+
+  // Load holders when market or selected candidate changes
+  useEffect(() => {
+    const loadHolders = async () => {
+      if (!market || !holdersCandidate) return
+      try {
+        const holdersData = await themisApi.getHolders(market.id, holdersCandidate)
+        setHolders(holdersData)
+      } catch (error) {
+        console.error('Error loading holders:', error)
+      }
+    }
+    loadHolders()
+  }, [market?.id, holdersCandidate])
+
+  // Load activity when market or activity filter changes
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!market) return
+      try {
+        const outcomeFilter = activityCandidate === 'All' ? undefined : activityCandidate
+        const activityData = await themisApi.getActivity(market.id, outcomeFilter)
+        setActivity(activityData)
+      } catch (error) {
+        console.error('Error loading activity:', error)
+      }
+    }
+    loadActivity()
+  }, [market?.id, activityCandidate])
+
+  // Helper function to convert question to slug
+  const questionToSlug = (question: string) => {
+    return question.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   }
 
-  const mockCandidates: Candidate[] = [
-    {
-      id: 1,
-      name: 'Zohran Mamdani',
-      percentage: '87%',
-      trend: '▲ 1%',
-      volume: '$28,568,153',
-      buyYesPrice: '87.2¢',
-      buyNoPrice: '13.1¢'
-    },
-    {
-      id: 2,
-      name: 'Andrew Cuomo',
-      percentage: '13%',
-      trend: '▼ 1%',
-      volume: '$10,808,193',
-      buyYesPrice: '12.6¢',
-      buyNoPrice: '87.6¢'
-    },
-    {
-      id: 3,
-      name: 'Curtis Sliwa',
-      percentage: '<1%',
-      trend: '',
-      volume: '$9,483,641',
-      buyYesPrice: '0.3¢',
-      buyNoPrice: '99.8¢'
-    },
-    {
-      id: 4,
-      name: 'Eric Adams',
-      percentage: '<1%',
-      trend: '',
-      volume: '$8,234,521',
-      buyYesPrice: '0.1¢',
-      buyNoPrice: '100¢'
-    }
-  ]
+  const handlePostComment = async () => {
+    if (!newCommentText.trim() || !market) return
 
-  const mockComments: Comment[] = [
-    {
-      id: 1,
-      user: 'politicalwatcher',
-      position: '2.5k Zohran',
-      timestamp: '3h ago',
-      text: 'Momentum is clearly with Mamdani right now',
-      likes: 12
-    },
-    {
-      id: 2,
-      user: 'NYCVoter2025',
-      position: '',
-      timestamp: '5h ago',
-      text: 'The recent polls are showing a huge shift towards progressive candidates. This could be a landslide.',
-      likes: 8
-    },
-    {
-      id: 3,
-      user: 'MarketAnalyst',
-      position: '1.2K Andrew',
-      timestamp: '1d ago',
-      text: 'Don\'t count Cuomo out yet. His name recognition is still strong.',
-      likes: 3
+    try {
+      const newComment = await themisApi.addComment({
+        marketId: market.id,
+        user: 'Anonymous',
+        text: newCommentText,
+        position: '',
+        isHolder: false
+      })
+      setComments([newComment, ...comments])
+      setNewCommentText('')
+    } catch (error) {
+      console.error('Error posting comment:', error)
     }
-  ]
+  }
 
-  const mockRelatedMarkets = [
-    {
-      id: 1,
-      logo: 'AC',
-      question: 'Will Andrew Cuomo win second place in the 2025 NYC mayoral election?',
-      percentage: '85%'
-    },
-    {
-      id: 2,
-      logo: 'DC',
-      question: 'Will the Democratic candidate win the NYC mayoral election?',
-      percentage: '87%'
-    },
-    {
-      id: 3,
-      logo: 'AC',
-      question: 'Will Andrew Cuomo get more than 35% of the vote in 2025 NYC mayoral election?',
-      percentage: '42%'
+  const handleTrade = async () => {
+    if (betAmount === 0 || !market) return
+
+    const selectedCandidate = candidates.find(c => c.id === selectedCandidateId)
+    if (!selectedCandidate) return
+
+    setIsTrading(true)
+
+    try {
+      await themisApi.placeBet({
+        marketId: market.id,
+        type: activeTab,
+        outcome: selectedCandidate.name, // Use candidate name as outcome for multi-option
+        amount: betAmount
+      })
+
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Trade Successful',
+        message: `Successfully ${activeTab === 'buy' ? 'bought' : 'sold'} ${betAmount} shares of ${selectedCandidate.name}.`
+      })
+
+      // Refresh global balance
+      await refreshBalance()
+
+      // Update local balance display
+      const balance = await themisApi.getUserBalance()
+      setUserBalance(balance.networth)
+
+      // Reset form after modal closes
+      setTimeout(() => {
+        setBetAmount(0)
+      }, 3000)
+    } catch (error) {
+      console.error('Trade failed:', error)
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Trade Failed',
+        message: 'Failed to place trade. Please try again.'
+      })
+    } finally {
+      setIsTrading(false)
     }
-  ]
+  }
 
-  const selectedCandidateData = mockCandidates.find(c => c.name === selectedCandidate)
+  // Filter markets based on selected tab and category
+  const filteredRelatedMarkets = useMemo(() => {
+    if (!market) return []
+    if (relatedTab === 'all' || relatedTab === market.category) {
+      return relatedMarkets
+    }
+    return relatedMarkets.filter(m => m.category === relatedTab)
+  }, [relatedMarkets, relatedTab, market])
+
+  // Filter and sort comments
+  const filteredAndSortedComments = useMemo(() => {
+    let filtered = [...comments]
+
+    if (holdersOnly) {
+      filtered = filtered.filter(c => c.isHolder)
+    }
+
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        case 'popular':
+          return b.likes - a.likes
+        case 'newest':
+        default:
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      }
+    })
+
+    return filtered
+  }, [comments, sortBy, holdersOnly])
+
+  // Filter activity by min amount (candidate filtering now done in API)
+  const filteredActivity = useMemo(() => {
+    let filtered = [...activity]
+
+    // Filter by min amount
+    if (activityMinAmount !== 'All') {
+      const minAmount = parseInt(activityMinAmount.replace('$', '').replace('+', ''))
+      filtered = filtered.filter(a => {
+        const amount = parseInt(a.dollarValue.replace('$', ''))
+        return amount >= minAmount
+      })
+    }
+
+    return filtered
+  }, [activity, activityMinAmount])
+
+  const selectedCandidateData = candidates.find(c => c.id === selectedCandidateId)
+
+  const handleCandidateClick = (candidateId: number) => {
+    setSelectedCandidateId(candidateId)
+    setExpandedCandidateId(expandedCandidateId === candidateId ? null : candidateId)
+  }
+
+  // Convert multi-option data to TradingView format with time filtering
+  const multiChartData = useMemo(() => {
+    const now = Date.now()
+    let cutoffTime = 0
+
+    // Calculate cutoff time based on selected interval
+    switch (chartTimeInterval) {
+      case '1H':
+        cutoffTime = now - (60 * 60 * 1000) // 1 hour
+        break
+      case '1D':
+        cutoffTime = now - (24 * 60 * 60 * 1000) // 1 day
+        break
+      case '1W':
+        cutoffTime = now - (7 * 24 * 60 * 60 * 1000) // 1 week
+        break
+      case '1M':
+        cutoffTime = now - (30 * 24 * 60 * 60 * 1000) // 30 days
+        break
+      case '1Y':
+        cutoffTime = now - (365 * 24 * 60 * 60 * 1000) // 1 year
+        break
+      case 'ALL':
+        cutoffTime = 0 // Show all data
+        break
+      default:
+        cutoffTime = now - (30 * 24 * 60 * 60 * 1000) // Default to 1 month
+    }
+
+    const converted: Record<string, Array<{ time: number; value: number }>> = {}
+
+    Object.keys(mockMultiOptionPriceHistory).forEach(candidateName => {
+      converted[candidateName] = mockMultiOptionPriceHistory[candidateName as keyof typeof mockMultiOptionPriceHistory]
+        .filter(point => new Date(point.timestamp).getTime() >= cutoffTime)
+        .map(point => ({
+          time: Math.floor(new Date(point.timestamp).getTime() / 1000),
+          value: point.price * 100 // Convert 0-1 to 0-100 percentage
+        }))
+    })
+
+    return converted
+  }, [chartTimeInterval])
+
+  const themisScrollbarStyles = `
+    .themis-scrollbar::-webkit-scrollbar {
+      width: 0.2px !important;
+      height: 0.2px !important;
+    }
+    .themis-scrollbar::-webkit-scrollbar-track {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    .themis-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.6) !important;
+      border-radius: 0.5px !important;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+    }
+    .themis-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.8) !important;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 1) !important;
+    }
+    .themis-scrollbar::-webkit-scrollbar-button {
+      display: none !important;
+    }
+    .themis-scrollbar {
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(0, 0, 0, 0.6) transparent !important;
+    }
+  `
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{
+        backgroundImage: 'url(/themis/themis-bg/themis-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}>
+        <div className="text-[#ffffe4] font-geist">Loading market...</div>
+      </div>
+    )
+  }
+
+  if (!market) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{
+        backgroundImage: 'url(/themis/themis-bg/themis-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}>
+        <div className="text-[#ffffe4] font-geist">Market not found</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-[#FF8480]">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: themisScrollbarStyles }} />
+      <div className="min-h-screen" style={{
+        backgroundImage: 'url(/themis/themis-bg/themis-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
       {/* Fixed Container */}
       <div className="max-w-[1400px] mx-auto px-8 py-8">
 
         {/* Back Button */}
         <button
           onClick={() => navigate('/themis')}
-          className="font-geist-mono text-white mb-6 hover:opacity-70 transition-opacity flex items-center gap-2"
+          className="font-geist-mono text-[#ffffe4] mb-6 hover:opacity-70 transition-opacity flex items-center gap-2 border border-white/20 rounded px-4 py-2 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl"
         >
           <span>←</span>
           <span>Back to Markets</span>
@@ -151,26 +422,55 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
 
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded flex items-center justify-center">
-              <span className="text-white text-2xl">🗽</span>
+          {/* Title and Info Container with Square Image */}
+          <div className="flex items-center gap-6 p-6 border border-white/20 rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl shadow-lg">
+            {/* Left: Square image */}
+            <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+              <img
+                src={market.imageUrl || '/themis/questions/themis-test.png'}
+                alt="Market question"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <h1 className="font-geist text-white text-4xl uppercase">
-              {mockMarket.question}
-            </h1>
-          </div>
-          <div className="flex gap-6 font-geist-mono text-sm text-white/80">
-            <div>
-              <span className="text-white/60">Volume: </span>
-              <span>{mockMarket.volume}</span>
-            </div>
-            <div>
-              <span className="text-white/60">Category: </span>
-              <span className="uppercase">{mockMarket.category}</span>
-            </div>
-            <div>
-              <span className="text-white/60">Closes: </span>
-              <span>Nov 4, 2025</span>
+
+            {/* Right: Question and metadata */}
+            <div className="flex-1">
+              <h1 className="font-geist-bold text-[#ffffe4] text-4xl mb-1 uppercase">
+                {market.question}
+              </h1>
+              <div className="flex gap-6 font-geist-mono text-sm text-[#ffffe4]/80 items-center">
+                <div>
+                  <span className="text-[#ffffe4]/60">Volume: </span>
+                  <span>{market.volume}</span>
+                </div>
+                <div>
+                  <span className="text-[#ffffe4]/60">Category: </span>
+                  <span className="uppercase">{market.category}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#ffffe4]/60">Closes: </span>
+                  <span>Nov 4, 2025</span>
+                  {/* Save Button */}
+                  <button
+                    onClick={() => toggleSaveMarket(market.id.toString())}
+                    className="p-1 rounded hover:bg-black/10 transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill={isSaved(market.id.toString()) ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -182,112 +482,223 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
           <div className="lg:col-span-8 space-y-8">
 
             {/* Chart Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 h-[500px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-white/60 font-geist-mono mb-4">Multi-Line Chart Placeholder</div>
-                <div className="text-white font-geist text-sm">
-                  {mockCandidates.map((candidate, idx) => (
-                    <div key={candidate.id} className="flex items-center justify-center gap-2 mb-1">
-                      <div className={`w-3 h-3 rounded-full`} style={{
-                        backgroundColor: idx === 0 ? '#FF8480' : idx === 1 ? '#4A90E2' : idx === 2 ? '#F5A623' : '#7ED321'
-                      }} />
-                      <span>{candidate.name} {candidate.percentage}</span>
-                    </div>
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-6">
+              {/* Chart Header with Percentage and Time Intervals */}
+              <div className="flex items-center justify-between mb-4 pt-4 pb-4 border-t border-b border-white/20">
+                <div className="flex items-center gap-2">
+                  <span className="font-geist text-[#ffffe4] text-3xl font-bold">{candidates[0]?.percentage}</span>
+                  <span className="font-geist text-[#ffffe4] text-3xl font-bold">Chance</span>
+                  <span className="font-geist-mono text-lime-500 text-sm">{candidates[0]?.trend}</span>
+                </div>
+                <div className="flex gap-1">
+                  {['1H', '1D', '1W', '1M', '1Y', 'ALL'].map((interval) => (
+                    <button
+                      key={interval}
+                      onClick={() => setChartTimeInterval(interval)}
+                      className={`font-geist-mono text-xs px-3 py-1 rounded transition-all border border-white/20 ${
+                        chartTimeInterval === interval
+                          ? 'bg-black/20 text-[#ffffe4]'
+                          : 'text-[#ffffe4]/40 hover:text-[#ffffe4]/60'
+                      }`}
+                    >
+                      {interval}
+                    </button>
                   ))}
                 </div>
               </div>
+
+              <MultiLineChartThemis
+                data={multiChartData}
+                colors={{
+                  'Zohran Mamdani': '#ffffe4',
+                  'Andrew Cuomo': '#84cc16',
+                  'Curtis Sliwa': '#60a5fa',
+                  'Eric Adams': '#f59e0b'
+                }}
+                height="500px"
+              />
             </div>
 
             {/* Outcome Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-white text-xl">Outcome</h2>
-                <div className="flex items-center gap-2 font-geist-mono text-white/60 text-sm">
-                  <span>% CHANCE</span>
-                  <button className="text-white/40 hover:text-white">↻</button>
-                </div>
+            <div className="bg-transparent rounded-lg">
+              <div className="flex items-center justify-between mb-4 pt-4 pb-4 border-t border-b border-[#ffffe4]/20">
+                <h2 className="font-geist text-[#ffffe4] text-xl">Outcome</h2>
               </div>
 
               {/* Candidates List */}
-              <div className="space-y-3">
-                {mockCandidates.map((candidate, idx) => (
-                  <div
-                    key={candidate.id}
-                    className="flex items-center gap-4 p-4 bg-white/10 rounded-lg hover:bg-white/15 transition-all"
-                  >
-                    {/* Avatar */}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0`} style={{
-                      background: `linear-gradient(to bottom right, ${
-                        idx === 0 ? '#FF8480, #FF6B66' :
-                        idx === 1 ? '#4A90E2, #357ABD' :
-                        idx === 2 ? '#F5A623, #E09419' :
-                        '#7ED321, #6BC41A'
-                      })`
-                    }}>
-                      <span className="font-geist-mono text-white text-sm font-bold">
-                        {candidate.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-
-                    {/* Name & Volume */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-geist text-white mb-1">{candidate.name}</div>
-                      <div className="font-geist-mono text-white/60 text-xs">
-                        {candidate.volume} Vol.
-                      </div>
-                    </div>
-
-                    {/* Percentage & Trend */}
-                    <div className="text-right flex items-center gap-2">
-                      {candidate.trend && (
-                        <span className={`font-geist-mono text-xs ${
-                          candidate.trend.includes('▲') ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {candidate.trend}
+              <div className="space-y-3 px-6 pb-6">
+                {candidates.map((candidate, idx) => (
+                  <div key={candidate.id}>
+                    {/* Candidate Row */}
+                    <div
+                      onClick={() => handleCandidateClick(candidate.id)}
+                      className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl shadow-lg ${
+                        selectedCandidateId === candidate.id
+                          ? 'border-2 border-white/40'
+                          : 'border border-white/20 hover:border-white/30'
+                      }`}
+                    >
+                      {/* Avatar */}
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0`} style={{
+                        background: `linear-gradient(to bottom right, ${
+                          idx === 0 ? '#FF8480, #FF6B66' :
+                          idx === 1 ? '#4A90E2, #357ABD' :
+                          idx === 2 ? '#F5A623, #E09419' :
+                          '#7ED321, #6BC41A'
+                        })`
+                      }}>
+                        <span className="font-geist-mono text-[#ffffe4] text-sm font-bold">
+                          {candidate.name.split(' ').map(n => n[0]).join('')}
                         </span>
-                      )}
-                      <div className="font-geist-mono text-white text-2xl font-bold">
-                        {candidate.percentage}
+                      </div>
+
+                      {/* Name & Volume */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-geist text-[#ffffe4] mb-1">{candidate.name}</div>
+                        <div className="font-geist-mono text-[#ffffe4]/60 text-xs">
+                          {candidate.volume} Vol.
+                        </div>
+                      </div>
+
+                      {/* Percentage & Trend */}
+                      <div className="text-right flex items-center gap-2">
+                        {candidate.trend && (
+                          <span className={`font-geist-mono text-xs ${
+                            candidate.trend.includes('▲') ? 'text-lime-400' : 'text-red-400'
+                          }`}>
+                            {candidate.trend}
+                          </span>
+                        )}
+                        <div className="font-geist-mono text-[#ffffe4] text-2xl font-bold">
+                          {candidate.percentage}
+                        </div>
+                      </div>
+
+                      {/* Buy/Sell Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          className="font-geist-mono text-xs w-20 py-2 text-white rounded transition-all"
+                          style={{ backgroundColor: '#84cc16', transform: 'scale(1)', filter: 'brightness(1)' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.02)'
+                            e.currentTarget.style.filter = 'brightness(1.1)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.filter = 'brightness(1)'
+                          }}
+                        >
+                          Y {candidate.buyYesPrice}
+                        </button>
+                        <button
+                          className="font-geist-mono text-xs w-20 py-2 text-white rounded transition-all"
+                          style={{ backgroundColor: '#ef4444', transform: 'scale(1)', filter: 'brightness(1)' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.02)'
+                            e.currentTarget.style.filter = 'brightness(1.1)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.filter = 'brightness(1)'
+                          }}
+                        >
+                          N {candidate.buyNoPrice}
+                        </button>
+                      </div>
+
+                      {/* Expand/Collapse Indicator */}
+                      <div className="text-[#ffffe4]/60 text-xl">
+                        {expandedCandidateId === candidate.id ? '▼' : '▶'}
                       </div>
                     </div>
 
-                    {/* Buy/Sell Buttons */}
-                    <div className="flex gap-2">
-                      <button className="font-geist-mono text-xs w-20 py-2 bg-[#FF8480] text-white rounded hover:opacity-80 transition-all">
-                        Y {candidate.buyYesPrice}
-                      </button>
-                      <button className="font-geist-mono text-xs w-20 py-2 bg-black text-white rounded hover:opacity-80 transition-all">
-                        N {candidate.buyNoPrice}
-                      </button>
+                    {/* Collapsible Detail Panel */}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        expandedCandidateId === candidate.id ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+                      }`}
+                    >
+                      <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-lg p-6 border border-white/20 shadow-lg">
+                        {/* Tabs */}
+                        <div className="flex gap-6 mb-6 border-b border-white/20">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOutcomeDetailTab('orderbook')
+                            }}
+                            className={`font-geist-mono pb-3 transition-colors ${
+                              outcomeDetailTab === 'orderbook'
+                                ? 'text-[#ffffe4] border-b-2 border-[#ffffe4]'
+                                : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
+                            }`}
+                          >
+                            Order Book
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOutcomeDetailTab('graph')
+                            }}
+                            className={`font-geist-mono pb-3 transition-colors ${
+                              outcomeDetailTab === 'graph'
+                                ? 'text-[#ffffe4] border-b-2 border-[#ffffe4]'
+                                : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
+                            }`}
+                          >
+                            Graph
+                          </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        {outcomeDetailTab === 'orderbook' ? (
+                          <div className="border-t border-b border-white/20 py-4">
+                            <OrderBookTable />
+                          </div>
+                        ) : (
+                          <div>
+                            <AreaChartThemis
+                              data={multiChartData[candidate.name] || multiChartData['Zohran Mamdani']}
+                              color={
+                                candidate.id === 1 ? '#84cc16' :
+                                candidate.id === 2 ? '#60a5fa' :
+                                candidate.id === 3 ? '#f59e0b' :
+                                '#f59e0b'
+                              }
+                              height="400px"
+                              theme="dark"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Order Book Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-white text-xl">Order Book</h2>
-                <button className="font-geist-mono text-white/60 text-sm hover:text-white transition-colors">
-                  ▼
+            {/* Market Context Section */}
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg">
+              <div className="flex items-center justify-between mb-4 px-6 pt-4 pb-4 border-b border-white/20">
+                <h2 className="font-geist text-[#ffffe4] text-xl">Market Context</h2>
+                <button className="font-geist-mono text-[#ffffe4] text-sm hover:text-[#ffffe4]/70 transition-colors border border-white/20 rounded px-3 py-1">
+                  Generate
                 </button>
               </div>
-              <div className="text-white/60 font-geist-mono text-sm text-center py-8">
-                Order book data will appear here
+              <div className="text-[#ffffe4]/60 font-geist-mono text-sm px-6 pb-6">
+                Market context and additional information will appear here
               </div>
             </div>
 
             {/* Comments Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-6">
               {/* Tabs */}
               <div className="flex gap-6 mb-6 border-b border-white/20">
                 <button
                   onClick={() => setCommentsTab('comments')}
                   className={`font-geist-mono pb-3 transition-colors ${
                     commentsTab === 'comments'
-                      ? 'text-white border-b-2 border-white'
-                      : 'text-white/60 hover:text-white'
+                      ? 'text-[#ffffe4] border-b-2 border-[#ffffe4]'
+                      : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
                   }`}
                 >
                   Comments (18)
@@ -296,8 +707,8 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
                   onClick={() => setCommentsTab('holders')}
                   className={`font-geist-mono pb-3 transition-colors ${
                     commentsTab === 'holders'
-                      ? 'text-white border-b-2 border-white'
-                      : 'text-white/60 hover:text-white'
+                      ? 'text-[#ffffe4] border-b-2 border-[#ffffe4]'
+                      : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
                   }`}
                 >
                   Top Holders
@@ -306,55 +717,69 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
                   onClick={() => setCommentsTab('activity')}
                   className={`font-geist-mono pb-3 transition-colors ${
                     commentsTab === 'activity'
-                      ? 'text-white border-b-2 border-white'
-                      : 'text-white/60 hover:text-white'
+                      ? 'text-[#ffffe4] border-b-2 border-[#ffffe4]'
+                      : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
                   }`}
                 >
                   Activity
                 </button>
               </div>
 
-              {/* Comment Input */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3 bg-white/10 rounded-lg p-4 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Add a comment"
-                    className="flex-1 bg-transparent text-white placeholder:text-white/40 font-geist-mono text-sm outline-none"
-                  />
-                  <button className="font-geist-mono text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                    Post
-                  </button>
-                </div>
-              </div>
+              {/* Tab Content */}
+              {commentsTab === 'comments' && (
+                <div>
+                  {/* Comment Input */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 bg-black/5 rounded-lg p-4 mb-2 border border-white/20">
+                      <input
+                        type="text"
+                        placeholder="Add a comment"
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
+                        className="flex-1 bg-transparent text-[#ffffe4] placeholder:text-[#ffffe4]/40 font-geist-mono text-sm outline-none"
+                      />
+                      <button
+                        onClick={handlePostComment}
+                        disabled={!newCommentText.trim()}
+                        className="font-geist-mono text-sm text-[#ffffe4] hover:text-[#ffffe4]/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/20 rounded px-3 py-1"
+                      >
+                        Post
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Sort Controls */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <span className="font-geist-mono text-white/60 text-sm">Sort by:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-white/10 text-white font-geist-mono text-sm px-3 py-1 rounded border border-white/20 outline-none"
-                  >
-                    <option value="newest">Newest</option>
-                    <option value="oldest">Oldest</option>
-                    <option value="popular">Most Popular</option>
-                  </select>
-                  <label className="flex items-center gap-2 font-geist-mono text-white/60 text-sm cursor-pointer">
-                    <input type="checkbox" className="rounded" />
-                    <span>Holders</span>
-                  </label>
-                </div>
-                <div className="flex items-center gap-2 text-white/60 font-geist-mono text-xs">
-                  <span>⚠️</span>
-                  <span>Beware of external links</span>
-                </div>
-              </div>
+                  {/* Sort Controls */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <Dropdown
+                        value={sortBy}
+                        onChange={setSortBy}
+                        options={[
+                          { value: 'newest', label: 'Newest' },
+                          { value: 'oldest', label: 'Oldest' },
+                          { value: 'popular', label: 'Most Popular' }
+                        ]}
+                      />
+                      <label className="flex items-center gap-2 font-geist-mono text-[#ffffe4]/60 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={holdersOnly}
+                          onChange={(e) => setHoldersOnly(e.target.checked)}
+                          className="rounded"
+                        />
+                        <span>Holders</span>
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2 text-[#ffffe4]/60 font-geist-mono text-xs">
+                      <span>⚠️</span>
+                      <span>Beware of external links</span>
+                    </div>
+                  </div>
 
-              {/* Comments List */}
-              <div className="space-y-4">
-                {mockComments.map((comment) => (
+                  {/* Comments List */}
+                  <div className="space-y-4">
+                {filteredAndSortedComments.map((comment) => (
                   <div key={comment.id} className="border-b border-white/10 pb-4 last:border-b-0">
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
@@ -363,19 +788,19 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
                       {/* Comment Content */}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-geist-mono text-white text-sm">{comment.user}</span>
+                          <span className="font-geist-mono text-[#ffffe4] text-sm">{comment.user}</span>
                           {comment.position && (
-                            <span className="font-geist-mono text-xs px-2 py-0.5 rounded bg-[#FF8480]/30 text-white">
+                            <span className="font-geist-mono text-xs px-2 py-0.5 rounded bg-[#FF8480]/30 text-[#ffffe4]">
                               {comment.position}
                             </span>
                           )}
-                          <span className="font-geist-mono text-white/40 text-xs">{comment.timestamp}</span>
+                          <span className="font-geist-mono text-[#ffffe4]/40 text-xs">{comment.timestamp}</span>
                         </div>
-                        <p className="font-geist-mono text-white/80 text-sm mb-2">
+                        <p className="font-geist-mono text-[#ffffe4]/80 text-sm mb-2">
                           {comment.text}
                         </p>
                         <div className="flex items-center gap-4">
-                          <button className="flex items-center gap-1 text-white/60 hover:text-white transition-colors">
+                          <button className="flex items-center gap-1 text-[#ffffe4]/60 hover:text-[#ffffe4] transition-colors">
                             <span className="text-sm">♡</span>
                             <span className="font-geist-mono text-xs">{comment.likes}</span>
                           </button>
@@ -383,26 +808,146 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
                       </div>
 
                       {/* Menu */}
-                      <button className="text-white/40 hover:text-white transition-colors">
+                      <button className="text-[#ffffe4]/40 hover:text-[#ffffe4] transition-colors">
                         <span>⋯</span>
                       </button>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
+                  </div>
+                </div>
+              )}
 
-            {/* Market Context Section */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-white text-xl">Market Context</h2>
-                <button className="font-geist-mono text-blue-400 text-sm hover:text-blue-300 transition-colors">
-                  Generate
-                </button>
-              </div>
-              <div className="text-white/60 font-geist-mono text-sm">
-                Market context and additional information will appear here
-              </div>
+              {/* Top Holders Tab Content */}
+              {commentsTab === 'holders' && (
+                <div>
+                  {/* Candidate Selector Dropdown */}
+                  <div className="mb-6">
+                    <Dropdown
+                      value={holdersCandidate}
+                      onChange={setHoldersCandidate}
+                      options={candidates.map(c => ({ value: c.name, label: c.name }))}
+                      className="max-w-xs"
+                    />
+                  </div>
+
+                  {/* Two Column Holders Layout */}
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Yes Holders */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-geist-mono text-[#ffffe4] text-sm">Yes holders</h3>
+                        <span className="font-geist-mono text-[#ffffe4]/60 text-xs">SHARES</span>
+                      </div>
+                      <div className="space-y-3">
+                        {holders.yes.map((holder) => (
+                          <div key={holder.id} className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-full flex-shrink-0"
+                              style={{ background: holder.avatar }}
+                            />
+                            <span className="font-geist-mono text-[#ffffe4] text-sm flex-1 truncate">
+                              {holder.username}
+                            </span>
+                            <span className="font-geist-mono text-lime-400 text-sm">
+                              {holder.shares}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* No Holders */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-geist-mono text-[#ffffe4] text-sm">No holders</h3>
+                        <span className="font-geist-mono text-[#ffffe4]/60 text-xs">SHARES</span>
+                      </div>
+                      <div className="space-y-3">
+                        {holders.no.map((holder) => (
+                          <div key={holder.id} className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-full flex-shrink-0"
+                              style={{ background: holder.avatar }}
+                            />
+                            <span className="font-geist-mono text-[#ffffe4] text-sm flex-1 truncate">
+                              {holder.username}
+                            </span>
+                            <span className="font-geist-mono text-red-400 text-sm">
+                              {holder.shares}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Activity Tab Content */}
+              {commentsTab === 'activity' && (
+                <div>
+                  {/* Filter Dropdowns */}
+                  <div className="flex gap-3 mb-6">
+                    <Dropdown
+                      value={activityCandidate}
+                      onChange={setActivityCandidate}
+                      options={[
+                        { value: 'All', label: 'All' },
+                        ...candidates.map(c => ({ value: c.name, label: c.name }))
+                      ]}
+                    />
+
+                    <Dropdown
+                      value={activityMinAmount}
+                      onChange={setActivityMinAmount}
+                      options={[
+                        { value: 'All', label: 'Min amount' },
+                        { value: '10', label: '$10+' },
+                        { value: '50', label: '$50+' },
+                        { value: '100', label: '$100+' }
+                      ]}
+                    />
+                  </div>
+
+                  {/* Activity Feed */}
+                  <div className="space-y-3">
+                    {filteredActivity.map((activity) => (
+                      <div key={activity.id} className="flex items-center gap-3 py-2">
+                        {/* Avatar */}
+                        <div
+                          className="w-8 h-8 rounded-full flex-shrink-0"
+                          style={{ background: activity.avatar }}
+                        />
+
+                        {/* Activity Details */}
+                        <div className="flex-1 font-geist-mono text-sm text-[#ffffe4]">
+                          <span className="text-[#ffffe4]">{activity.username}</span>
+                          {' '}
+                          <span className="text-[#ffffe4]/60">{activity.action}</span>
+                          {' '}
+                          <span className={activity.type === 'yes' ? 'text-lime-400' : 'text-red-400'}>
+                            {activity.amount}
+                          </span>
+                          {' '}
+                          <span className="text-[#ffffe4]/60">for</span>
+                          {' '}
+                          <span className="text-[#ffffe4]">{activity.candidate}</span>
+                          {' '}
+                          <span className="text-[#ffffe4]/60">at {activity.price}</span>
+                          {' '}
+                          <span className="text-[#ffffe4]/40">({activity.dollarValue})</span>
+                        </div>
+
+                        {/* Timestamp */}
+                        <span className="font-geist-mono text-[#ffffe4]/40 text-xs">
+                          {activity.timestamp}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -410,121 +955,204 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
           {/* Right Column - Trading Panel & Related Markets (4 cols) */}
           <div className="lg:col-span-4 space-y-8">
 
-            {/* User Info Card */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500" />
-                <div className="font-geist text-white">Zohran Mamdani</div>
-              </div>
-            </div>
-
             {/* Trading Panel - Sticky */}
-            <div className="lg:sticky lg:top-8">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-8">
+            <div className="lg:sticky lg:top-8 space-y-8">
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-6">
+
+                {/* User Info Card - Dynamic */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center`} style={{
+                      background: `linear-gradient(to bottom right, ${
+                        selectedCandidateId === 1 ? '#FF8480, #FF6B66' :
+                        selectedCandidateId === 2 ? '#4A90E2, #357ABD' :
+                        selectedCandidateId === 3 ? '#F5A623, #E09419' :
+                        '#7ED321, #6BC41A'
+                      })`
+                    }}>
+                      <span className="font-geist-mono text-[#ffffe4] text-sm font-bold">
+                        {selectedCandidateData?.name.split(' ').map(n => n[0]).join('') || '?'}
+                      </span>
+                    </div>
+                    <div className="font-geist text-[#ffffe4]">{selectedCandidateData?.name || 'No candidate selected'}</div>
+                  </div>
+                  <div className="text-[#ffffe4]/40 font-geist-mono text-xs">
+                    Click a candidate to select
+                  </div>
+                </div>
 
                 {/* Buy/Sell Tabs */}
-                <div className="flex gap-2 mb-6">
+                <div className="flex gap-6 mb-6 border-b border-[#ffffe4]/20">
                   <button
                     onClick={() => setActiveTab('buy')}
-                    className={`font-geist-mono flex-1 py-3 rounded transition-all ${
+                    className={`font-geist text-base py-2 relative ${
                       activeTab === 'buy'
-                        ? 'bg-white text-black'
-                        : 'bg-white/20 text-white hover:bg-white/30'
+                        ? 'text-[#ffffe4]'
+                        : 'text-[#ffffe4]/50'
                     }`}
+                    style={{ transition: 'all 0.2s ease', transform: 'scale(1)' }}
+                    onMouseEnter={(e) => {
+                      if (activeTab !== 'buy') {
+                        e.currentTarget.style.transform = 'scale(1.05)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                    }}
                   >
                     Buy
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[#ffffe4] transition-all duration-300 ease-out ${
+                        activeTab === 'buy' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
+                      }`}
+                    />
                   </button>
                   <button
                     onClick={() => setActiveTab('sell')}
-                    className={`font-geist-mono flex-1 py-3 rounded transition-all ${
+                    className={`font-geist text-base py-2 relative ${
                       activeTab === 'sell'
-                        ? 'bg-white text-black'
-                        : 'bg-white/20 text-white hover:bg-white/30'
+                        ? 'text-[#ffffe4]'
+                        : 'text-[#ffffe4]/50'
                     }`}
+                    style={{ transition: 'all 0.2s ease', transform: 'scale(1)' }}
+                    onMouseEnter={(e) => {
+                      if (activeTab !== 'sell') {
+                        e.currentTarget.style.transform = 'scale(1.05)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                    }}
                   >
                     Sell
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[#ffffe4] transition-all duration-300 ease-out ${
+                        activeTab === 'sell' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
+                      }`}
+                    />
                   </button>
-                </div>
-
-                {/* Market Selector */}
-                <div className="mb-6">
-                  <label className="font-geist-mono text-white/60 text-sm mb-2 block">
-                    Market
-                  </label>
-                  <select
-                    value={selectedCandidate}
-                    onChange={(e) => setSelectedCandidate(e.target.value)}
-                    className="w-full bg-white/20 text-white font-geist-mono px-4 py-3 rounded border border-white/20 outline-none"
-                  >
-                    {mockCandidates.map((candidate) => (
-                      <option key={candidate.id} value={candidate.name}>
-                        {candidate.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* Outcome Selection */}
                 <div className="mb-6">
-                  <label className="font-geist-mono text-white/60 text-sm mb-2 block">
+                  <label className="font-geist-mono text-[#ffffe4]/60 text-sm mb-2 block">
                     Outcome
                   </label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedOption('yes')}
-                      className={`font-geist-mono flex-1 py-3 rounded transition-all ${
-                        selectedOption === 'yes'
-                          ? 'bg-[#FF8480] text-white border-2 border-white'
-                          : 'bg-white/20 text-white hover:bg-white/30'
-                      }`}
+                      className="font-geist-mono flex-1 py-3 rounded text-white"
+                      style={{
+                        backgroundColor: selectedOption === 'yes' ? '#a3e635' : '#84cc16',
+                        transform: 'scale(1)',
+                        filter: 'brightness(1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedOption !== 'yes') {
+                          e.currentTarget.style.transform = 'scale(1.02)'
+                          e.currentTarget.style.filter = 'brightness(1.1)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedOption !== 'yes') {
+                          e.currentTarget.style.transform = 'scale(1)'
+                          e.currentTarget.style.filter = 'brightness(1)'
+                        }
+                      }}
                     >
-                      <div>Yes</div>
-                      <div className="text-sm">{selectedCandidateData?.buyYesPrice}</div>
+                      Yes {selectedCandidateData?.buyYesPrice}
                     </button>
                     <button
                       onClick={() => setSelectedOption('no')}
-                      className={`font-geist-mono flex-1 py-3 rounded transition-all ${
-                        selectedOption === 'no'
-                          ? 'bg-black text-white border-2 border-white'
-                          : 'bg-white/20 text-white hover:bg-white/30'
-                      }`}
+                      className="font-geist-mono flex-1 py-3 rounded text-white"
+                      style={{
+                        backgroundColor: selectedOption === 'no' ? '#f87171' : '#ef4444',
+                        transform: 'scale(1)',
+                        filter: 'brightness(1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedOption !== 'no') {
+                          e.currentTarget.style.transform = 'scale(1.02)'
+                          e.currentTarget.style.filter = 'brightness(1.1)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedOption !== 'no') {
+                          e.currentTarget.style.transform = 'scale(1)'
+                          e.currentTarget.style.filter = 'brightness(1)'
+                        }
+                      }}
                     >
-                      <div>No</div>
-                      <div className="text-sm">{selectedCandidateData?.buyNoPrice}</div>
+                      No {selectedCandidateData?.buyNoPrice}
                     </button>
                   </div>
                 </div>
 
                 {/* Amount Input */}
                 <div className="mb-6">
-                  <label className="font-geist-mono text-white/60 text-sm mb-2 block">
-                    Amount
-                  </label>
-                  <div className="bg-white/20 rounded p-4 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-geist-mono text-[#ffffe4]/60 text-sm">
+                      Amount
+                    </label>
+                    <span className="font-geist-mono text-[#ffffe4]/60 text-xs inline-flex items-baseline">
+                      Balance: <NetworthIcon className="w-3 h-3" />{userBalance.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="bg-transparent border border-[#ffffe4]/20 rounded p-4 mb-1">
                     <input
                       type="number"
-                      value={betAmount}
-                      onChange={(e) => setBetAmount(Number(e.target.value))}
+                      value={betAmount || ''}
+                      onChange={(e) => setBetAmount(e.target.value === '' ? 0 : Number(e.target.value))}
                       placeholder="0"
-                      className="w-full bg-transparent text-white font-geist text-2xl outline-none"
+                      className="w-full bg-transparent text-[#ffffe4] font-geist text-2xl outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       min="0"
                     />
                   </div>
 
+                  {/* Sliding Payout Panel */}
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out mb-3 ${
+                      betAmount > 0 ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="bg-black/5 rounded-lg p-4 space-y-3">
+                      {/* Odds */}
+                      <div className="flex justify-between items-center">
+                        <span className="font-geist-mono text-[#ffffe4]/60 text-sm">Odds</span>
+                        <span className="font-geist-mono text-[#ffffe4] text-sm">
+                          {selectedOption === 'yes' ? selectedCandidateData?.percentage :
+                            selectedCandidateData?.percentage === '87%' ? '13%' : '87%'} chance
+                        </span>
+                      </div>
+
+                      {/* Payout */}
+                      <div className="flex justify-between items-center">
+                        <span className="font-geist-mono text-[#ffffe4]/60 text-sm">
+                          Payout if {selectedOption === 'yes' ? 'Yes' : 'No'}
+                        </span>
+                        <span className="font-geist text-lime-400 text-2xl font-bold">
+                          ${Math.floor(betAmount * 1.15)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Quick Amount Buttons */}
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="flex justify-end gap-2">
                     {[1, 20, 100].map((amount) => (
                       <button
                         key={amount}
                         onClick={() => setBetAmount(betAmount + amount)}
-                        className="font-geist-mono text-sm py-2 bg-white/20 text-white rounded hover:bg-white/30 transition-all"
+                        className="font-geist-mono text-xs py-1 px-2 bg-transparent border border-[#ffffe4]/20 text-[#ffffe4] rounded hover:bg-[#ffffe4]/10 transition-all inline-flex items-baseline justify-center"
                       >
-                        +${amount}
+                        +<NetworthIcon className="w-3 h-3" />{amount}
                       </button>
                     ))}
                     <button
                       onClick={() => setBetAmount(10000)}
-                      className="font-geist-mono text-sm py-2 bg-white/20 text-white rounded hover:bg-white/30 transition-all"
+                      className="font-geist-mono text-xs py-1 px-2 bg-transparent border border-[#ffffe4]/20 text-[#ffffe4] rounded hover:bg-[#ffffe4]/10 transition-all"
                     >
                       Max
                     </button>
@@ -533,63 +1161,77 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
 
                 {/* Trade Button */}
                 <button
-                  className="w-full font-geist-mono py-4 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors mb-4"
-                  disabled={betAmount === 0}
+                  onClick={handleTrade}
+                  className="w-full font-geist-mono py-4 rounded transition-colors mb-4 bg-transparent border border-[#ffffe4]/20 text-[#ffffe4] hover:bg-[#ffffe4]/10"
+                  disabled={betAmount === 0 || isTrading}
                 >
-                  Trade
+                  {isTrading ? 'Processing...' : 'Trade'}
                 </button>
 
                 <div className="text-center">
-                  <span className="font-geist-mono text-xs text-white/60">
+                  <span className="font-geist-mono text-xs text-[#ffffe4]/60">
                     By trading, you agree to the <span className="underline cursor-pointer">Terms of Use</span>
                   </span>
                 </div>
               </div>
 
-              {/* Related Markets - Sticky */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-                {/* Tabs */}
-                <div className="flex gap-4 mb-4 overflow-x-auto">
-                  {['All', 'Politics', 'Elections', 'NYC Mayor'].map((tab) => (
+              {/* Related Markets */}
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-6">
+              {/* Tabs */}
+              <div className="flex gap-4 mb-4 overflow-x-auto themis-scrollbar">
+                {['All', 'Finance', 'Crypto', 'Economics', 'Politics'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setRelatedTab(tab.toLowerCase())}
+                    className={`font-geist-mono text-sm whitespace-nowrap transition-colors ${
+                      relatedTab === tab.toLowerCase()
+                        ? 'text-[#ffffe4]'
+                        : 'text-[#ffffe4]/60 hover:text-[#ffffe4]'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* Related Markets List */}
+              <div className="space-y-3">
+                {filteredRelatedMarkets.map((market) => {
+                  const marketSlug = questionToSlug(market.question)
+                  const marketPath = market.type === '2-option' ? '2-options' : 'multi-options'
+                  const percentage = market.type === '2-option' ? market.yes : market.options?.[0]?.percentage || '0%'
+
+                  return (
                     <button
-                      key={tab}
-                      onClick={() => setRelatedTab(tab.toLowerCase())}
-                      className={`font-geist-mono text-sm whitespace-nowrap transition-colors ${
-                        relatedTab === tab.toLowerCase()
-                          ? 'text-white'
-                          : 'text-white/60 hover:text-white'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Related Markets List */}
-                <div className="space-y-3">
-                  {mockRelatedMarkets.map((market) => (
-                    <div
                       key={market.id}
-                      className="flex items-center gap-3 p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-all cursor-pointer"
+                      onClick={() => navigate(`/themis/${marketPath}/${marketSlug}`)}
+                      className="w-full p-3 rounded-lg hover:bg-[#ffffe4]/10 transition-all cursor-pointer border border-[#ffffe4]/20 text-left"
                     >
-                      {/* Logo */}
-                      <div className="w-10 h-10 rounded bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                        <span className="font-geist-mono text-white text-xs font-bold">{market.logo}</span>
-                      </div>
+                      <div className="flex items-center gap-3">
+                        {/* Question Image Square */}
+                        <div
+                          className="w-10 h-10 flex-shrink-0 rounded bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${market.imageUrl || '/themis/questions/themis-test.png'})`
+                          }}
+                        />
 
-                      {/* Question & Percentage */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-geist text-white text-sm mb-1 truncate">
-                          {market.question}
-                        </p>
-                      </div>
+                        {/* Question Text */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-geist text-[#ffffe4] text-sm truncate">
+                            {market.question}
+                          </p>
+                        </div>
 
-                      <div className="font-geist-mono text-white text-lg font-bold">
-                        {market.percentage}
+                        {/* Percentage */}
+                        <div className="font-geist-mono text-[#ffffe4] text-lg font-bold">
+                          {percentage}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </button>
+                  )
+                })}
+              </div>
               </div>
             </div>
 
@@ -597,6 +1239,17 @@ export default function ThemisMultiOptions({ market }: ThemisMultiOptionsProps) 
         </div>
 
       </div>
+
+      {/* Status Modal */}
+      <StatusModal
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+        variant="themis"
+      />
     </div>
+    </>
   )
 }

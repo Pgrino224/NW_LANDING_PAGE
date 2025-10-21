@@ -1,10 +1,26 @@
 import { useState, useRef, useEffect } from 'react'
-import type { Token } from './mockData'
+import type { Token } from '../../services/api/dioneApi'
+import NetworthIcon from '../shared/NetworthIcon'
+import { AssetIcon } from '../../utils/iconHelper'
 
 interface SymbolSelectorProps {
   selectedToken: Token
   availableTokens: Token[]
   onSelectToken: (token: Token) => void
+}
+
+type Category = 'indices' | 'stocks' | 'etfs' | 'crypto' | 'commodities'
+
+// Helper to map category to asset type
+const getAssetTypeFromCategory = (category: Category): 'crypto' | 'index' | 'commodity' | 'etf' | 'stock' => {
+  const mapping: Record<Category, 'crypto' | 'index' | 'commodity' | 'etf' | 'stock'> = {
+    'crypto': 'crypto',
+    'indices': 'index',
+    'commodities': 'commodity',
+    'etfs': 'etf',
+    'stocks': 'stock'
+  }
+  return mapping[category] || 'crypto'
 }
 
 export default function SymbolSelector({ selectedToken, availableTokens, onSelectToken }: SymbolSelectorProps) {
@@ -49,7 +65,7 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
       <div className="flex items-center gap-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 hover:bg-white/5 rounded px-2 py-1 transition-colors"
+          className="flex items-center gap-2 hover:bg-white/5 rounded px-2 transition-colors border border-white/20"
         >
           <span className="text-white font-geist text-lg">{selectedToken.symbol}</span>
           <svg
@@ -64,10 +80,10 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
 
         {/* Current Price Info */}
         <div className="flex items-baseline gap-2">
-          <span className="text-white font-geist-mono-regular text-lg">
-            ${selectedToken.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-white font-geist-mono-regular text-lg flex items-baseline">
+            <NetworthIcon className="w-4 h-4" />{selectedToken.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className={`font-geist-mono-extralight text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+          <span className={`font-geist-mono-extralight text-xs ${isPositive ? 'text-lime-500' : 'text-red-500'}`}>
             {isPositive ? '+' : ''}{selectedToken.change.toFixed(2)} ({isPositive ? '+' : ''}{selectedToken.changePercent.toFixed(2)}%)
           </span>
         </div>
@@ -75,7 +91,7 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-[#131313] border border-white/10 rounded-lg shadow-xl z-50 max-h-96 flex flex-col">
+        <div className="absolute top-full left-0 mt-2 w-80 bg-black/90 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:border-white/30 shadow-2xl z-50 max-h-80 flex flex-col">
           {/* Search Input */}
           <div className="p-3 border-b border-white/10">
             <div className="relative">
@@ -94,7 +110,7 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
           </div>
 
           {/* Token List */}
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto custom-scrollbar flex-1">
             {filteredTokens.length === 0 ? (
               <div className="flex items-center justify-center h-20">
                 <p className="text-white/40 font-geist-mono-extralight text-sm">No symbols found</p>
@@ -116,12 +132,13 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
                   >
                     {/* Left: Icon + Symbol + Name */}
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0"
-                        style={{ backgroundColor: token.iconColor || '#666' }}
-                      >
-                        {token.symbol.substring(0, 1)}
-                      </div>
+                      <AssetIcon
+                        type={getAssetTypeFromCategory(token.category)}
+                        symbol={token.symbol}
+                        name={token.name}
+                        size={32}
+                        className="flex-shrink-0"
+                      />
                       <div className="text-left">
                         <div className="text-white font-geist text-sm">{token.symbol}</div>
                         <div className="text-white/50 font-geist-mono-extralight text-xs truncate">
@@ -132,10 +149,10 @@ export default function SymbolSelector({ selectedToken, availableTokens, onSelec
 
                     {/* Right: Price + Change */}
                     <div className="text-right">
-                      <div className="text-white font-geist-mono-regular text-sm">
-                        ${token.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <div className="text-white font-geist-mono-regular text-sm flex items-baseline justify-end">
+                        <NetworthIcon className="w-3 h-3" />{token.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
-                      <div className={`font-geist-mono-extralight text-xs ${tokenIsPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      <div className={`font-geist-mono-extralight text-xs ${tokenIsPositive ? 'text-lime-500' : 'text-red-500'}`}>
                         {tokenIsPositive ? '+' : ''}{token.changePercent.toFixed(2)}%
                       </div>
                     </div>

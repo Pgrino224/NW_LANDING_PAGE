@@ -5,8 +5,29 @@
 /* Geist Sans */
 @font-face {
   font-family: 'Geist';
+  src: url('/fonts/Geist/Geist-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist/Geist-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist';
   src: url('/fonts/Geist/Geist-Medium.ttf') format('truetype');
   font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist/Geist-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
 }
 
@@ -92,31 +113,146 @@ html, body {
   font-weight: 500;
 }
 
+.font-geist-extralight {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 200;
+}
+
+.font-geist-regular {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+}
+
+.font-geist-medium {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+}
+
+.font-geist-bold {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+}
+
+/* Legacy Geist Mono - Keep for backwards compatibility but map to Geist Sans */
 .font-geist-mono {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
 }
 
 .font-geist-mono-extralight {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 200;
 }
 
 .font-geist-mono-regular {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
 }
 
 .font-geist-mono-medium {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
 }
 
 .font-geist-mono-semibold {
-  font-family: 'Geist Mono', 'Courier New', monospace;
-  font-weight: 600;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
 }
 
 .font-geist-mono-bold {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
+}
+
+/* Global Scrollbar Styles - Applies to ALL scrollbars site-wide */
+::-webkit-scrollbar {
+  width: 0.2px;
+  height: 0.2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0.5px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 1);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox - Global */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.6) transparent;
+}
+
+/* Custom Scrollbar Class (matches global styles) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0.2px;
+  height: 0.2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0.5px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.6) transparent;
+}
+
+/* Themis-specific scrollbar with black background */
+.themis-scrollbar::-webkit-scrollbar {
+  width: 0.2px;
+  height: 0.2px;
+}
+
+.themis-scrollbar::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+.themis-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0.5px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.themis-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 1);
+}
+
+.themis-scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox */
+.themis-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.6) #000000;
 }

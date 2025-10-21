@@ -1,0 +1,273 @@
+/* Leaderboard Title */
+.skynet-leaderboard-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: #0a0a0a;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+}
+
+/* Controls Container (Tabs + Search) */
+.skynet-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Tab Navigation */
+.skynet-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Search Bar */
+.skynet-search-container {
+  display: flex;
+  align-items: center;
+}
+
+.skynet-search-input {
+  min-width: 250px;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  color: #0a0a0a;
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.skynet-search-input::placeholder {
+  color: #999;
+}
+
+.skynet-search-input:focus {
+  outline: none;
+  border-color: #0a0a0a;
+}
+
+.skynet-tab {
+  padding: 12px 24px;
+  background-color: transparent;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  color: #0a0a0a;
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skynet-tab:hover {
+  background-color: rgba(10, 10, 10, 0.05);
+  border-color: #0a0a0a;
+}
+
+.skynet-tab.active {
+  background-color: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #FFFFE4;
+}
+
+/* Leaderboard List */
+.skynet-leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.leaderboard-row:hover {
+  background-color: rgba(10, 10, 10, 0.02);
+  border-color: #d4d4d4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rank-number {
+  font-family: 'Geist', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a0a0a;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 1px solid #d4d4d4;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-right: none;
+  flex-shrink: 0;
+}
+
+.player-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-height: 56px;
+}
+
+.profile-pic {
+  position: absolute;
+  left: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  border: 1px solid #d4d4d4;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.banner-img {
+  position: absolute;
+  left: 40px;
+  width: 168px;
+  height: 56px;
+  border-radius: 4px;
+  background-color: #e8e8e8;
+  border: 1px solid #d4d4d4;
+  z-index: 1;
+}
+
+.player-info {
+  position: absolute;
+  left: 220px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.player-username {
+  font-family: 'Geist', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #0a0a0a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  margin-bottom: 2px;
+}
+
+.player-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0a0a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.metric-value {
+  font-family: 'Geist', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a0a0a;
+  min-width: 120px;
+  text-align: right;
+}
+
+.archetype-img {
+  width: 56px;
+  height: 56px;
+  background-color: #e8e8e8;
+  border: 1px solid #d4d4d4;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-left: none;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .skynet-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .skynet-search-input {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .skynet-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .skynet-tab {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .leaderboard-row {
+    padding: 8px 12px;
+    gap: 12px;
+  }
+
+  .rank-number {
+    font-size: 16px;
+    min-width: 30px;
+  }
+
+  .player-card {
+    min-height: 48px;
+  }
+
+  .profile-pic {
+    width: 48px;
+    height: 48px;
+  }
+
+  .banner-img {
+    width: 300px;
+    height: 48px;
+    left: 32px;
+  }
+
+  .player-info {
+    left: 48px;
+    padding-left: 12px;
+  }
+
+  .player-title {
+    font-size: 14px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+    min-width: 100px;
+  }
+}

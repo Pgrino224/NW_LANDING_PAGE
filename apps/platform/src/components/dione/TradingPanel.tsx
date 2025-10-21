@@ -1,18 +1,27 @@
 import { useState, useRef, useEffect } from 'react'
+import { dioneApi } from '../../services/api/dioneApi'
+import { useBalance } from '../../contexts/BalanceContext'
+import { useOrders } from '../../contexts/OrdersContext'
+import StatusModal from '../common/StatusModal'
+import NetworthIcon from '../shared/NetworthIcon'
 
 interface TradingPanelProps {
   symbol: string
   currentPrice: number
   mode: 'buy' | 'sell'
   onClose: () => void
+  onOrderPlaced?: () => void
 }
 
-export default function TradingPanel({ symbol, currentPrice, mode: initialMode, onClose }: TradingPanelProps) {
+export default function TradingPanel({ symbol, currentPrice, mode: initialMode, onClose, onOrderPlaced }: TradingPanelProps) {
+  const { balances, refreshBalance } = useBalance()
+  const { triggerRefresh } = useOrders()
   const [mode, setMode] = useState(initialMode)
   const [tradingType, setTradingType] = useState<'spot' | 'margin' | 'leverage' | 'options'>('spot')
   const [orderType, setOrderType] = useState('Limit')
   const [quantity, setQuantity] = useState(1)
   const [limitPrice, setLimitPrice] = useState(currentPrice)
+  const [stopPrice, setStopPrice] = useState(currentPrice)
   const [timeInForce, setTimeInForce] = useState('Good for day')
   const [tradingSession, setTradingSession] = useState('Market hours')
   const [leverage, setLeverage] = useState(1)
@@ -25,9 +34,70 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const panelRef = useRef<HTMLDivElement>(null)
 
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean
+    type: 'success' | 'error'
+    title: string
+    message: string
+  }>({ isOpen: false, type: 'success', title: '', message: '' })
+
   const estimatedCost = quantity * limitPrice
   const bidPrice = currentPrice - 0.01
   const askPrice = currentPrice + 0.02
+
+  // Handle order placement
+  const handlePlaceOrder = async () => {
+    setIsPlacingOrder(true)
+
+    try {
+      await dioneApi.placeOrder({
+        symbol,
+        type: orderType,
+        side: mode,
+        quantity,
+        price: limitPrice,
+        stopPrice: (orderType === 'Stop loss' || orderType === 'Stop limit') ? stopPrice : undefined,
+        tradingType,
+        leverage: tradingType === 'leverage' ? leverage : undefined,
+        strikePrice: tradingType === 'options' ? strikePrice : undefined,
+        optionType: tradingType === 'options' ? optionType : undefined,
+        expirationDate: tradingType === 'options' ? expirationDate : undefined
+      })
+
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Order Placed',
+        message: `Successfully placed ${mode} order for ${quantity} ${symbol} at ${limitPrice.toFixed(2)} NW.`
+      })
+
+      // Refresh global balance and orders
+      await refreshBalance()
+      triggerRefresh()
+
+      // Notify parent component to refresh orders/positions
+      if (onOrderPlaced) {
+        onOrderPlaced()
+      }
+
+      // Close panel after toast closes
+      setTimeout(() => {
+        onClose()
+      }, 3000)
+    } catch (error) {
+      console.error('Order placement failed:', error)
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Order Failed',
+        message: 'Failed to place order. Please try again.'
+      })
+    } finally {
+      setIsPlacingOrder(false)
+    }
+  }
 
   // Dragging functionality
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -69,7 +139,7 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
   return (
     <div
       ref={panelRef}
-      className="fixed bg-[#131313] border border-white/20 rounded-lg shadow-2xl"
+      className="fixed bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:border-white/30 shadow-2xl"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -85,7 +155,7 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
       >
         <div className="flex items-center gap-2">
           <span className="text-white font-geist text-lg">{symbol}</span>
-          <span className="text-white font-geist-mono-regular text-sm">${currentPrice.toFixed(2)}</span>
+          <span className="text-white font-geist-mono-regular text-sm inline-flex items-baseline"><NetworthIcon className="w-3 h-3" />{currentPrice.toFixed(2)}</span>
         </div>
         <button
           onClick={onClose}
@@ -102,9 +172,11 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
         <div className="relative bg-white/5 rounded-full p-1 flex">
           {/* Sliding background */}
           <div
-            className={`absolute top-1 bottom-1 w-1/2 rounded-full transition-all duration-300 ${
-              mode === 'buy' ? 'left-1 bg-green-500' : 'left-1/2 bg-red-500'
-            }`}
+            className="absolute top-1 bottom-1 w-1/2 rounded-full transition-all duration-300"
+            style={{
+              left: mode === 'buy' ? '0.25rem' : '50%',
+              backgroundColor: mode === 'buy' ? '#84cc16' : '#ef4444'
+            }}
           />
           {/* Buttons */}
           <button
@@ -158,6 +230,14 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
           </select>
         </div>
 
+        {/* Balance Display */}
+        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded px-3 py-2">
+          <span className="text-white/60 font-geist text-xs">Balance</span>
+          <span className="text-white font-geist-mono-regular text-sm flex items-baseline">
+            <NetworthIcon className="w-3 h-3" />{balances.networth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        </div>
+
         {/* Quantity */}
         <div className="flex items-center justify-between">
           <label className="text-white font-geist text-sm">Quantity</label>
@@ -205,6 +285,36 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
           </div>
         )}
 
+        {/* Stop Price - only for Stop loss and Stop limit orders */}
+        {(orderType === 'Stop loss' || orderType === 'Stop limit') && tradingType !== 'options' && (
+          <div className="flex items-center justify-between">
+            <label className="text-white font-geist text-sm">Stop price</label>
+            <div className="relative w-32">
+              <input
+                type="number"
+                value={stopPrice.toFixed(2)}
+                onChange={(e) => setStopPrice(Number(e.target.value))}
+                className="bg-[#1a1a1a] border border-white/10 text-white font-geist-mono-regular text-xs rounded px-3 py-1.5 pr-8 w-full focus:outline-none focus:border-white/20"
+                step="0.01"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                <button
+                  onClick={() => setStopPrice(p => p + 0.01)}
+                  className="text-white/50 hover:text-white text-xs leading-none"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setStopPrice(p => Math.max(0.01, p - 0.01))}
+                  className="text-white/50 hover:text-white text-xs leading-none"
+                >
+                  −
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Options-specific fields */}
         {tradingType === 'options' && (
           <>
@@ -212,9 +322,11 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
               <label className="text-white font-geist text-sm">Option type</label>
               <div className="relative bg-white/5 rounded-full p-0.5 flex w-32">
                 <div
-                  className={`absolute top-0.5 bottom-0.5 w-1/2 rounded-full transition-all duration-200 ${
-                    optionType === 'call' ? 'left-0.5 bg-green-500' : 'left-1/2 bg-red-500'
-                  }`}
+                  className="absolute top-0.5 bottom-0.5 w-1/2 rounded-full transition-all duration-200"
+                  style={{
+                    left: optionType === 'call' ? '0.125rem' : '50%',
+                    backgroundColor: optionType === 'call' ? '#84cc16' : '#ef4444'
+                  }}
                 />
                 <button
                   onClick={() => setOptionType('call')}
@@ -335,16 +447,16 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
         <div className="pt-3 border-t border-white/10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-white font-geist text-sm">Estimated cost</span>
-            <span className="text-white font-geist-mono-regular text-lg">${estimatedCost.toFixed(2)}</span>
+            <span className="text-white font-geist-mono-regular text-lg inline-flex items-baseline"><NetworthIcon className="w-3.5 h-3.5" />{estimatedCost.toFixed(2)}</span>
           </div>
-          <div className="text-white/40 font-geist-mono-extralight text-xs">
-            ${estimatedCost.toFixed(2)} buying power
+          <div className="text-white/40 font-geist-mono-extralight text-xs inline-flex items-baseline">
+            <NetworthIcon className="w-3 h-3" />{estimatedCost.toFixed(2)} buying power
           </div>
         </div>
 
         {/* Order Details */}
         <div className="text-white/50 font-geist-mono-extralight text-xs leading-relaxed">
-          Order will be placed at market open. Bid ${bidPrice.toFixed(2)} · {quantity} · Ask ${askPrice.toFixed(2)} · {quantity}. Last ${currentPrice.toFixed(2)} · 7.
+          Order will be placed at market open. Bid {bidPrice.toFixed(2)} NW · {quantity} · Ask {askPrice.toFixed(2)} NW · {quantity}. Last {currentPrice.toFixed(2)} NW · 7.
         </div>
 
         {/* Action Buttons */}
@@ -352,20 +464,31 @@ export default function TradingPanel({ symbol, currentPrice, mode: initialMode, 
           <button
             onClick={onClose}
             className="px-4 py-1.5 bg-white/5 hover:bg-white/10 text-white font-geist text-xs rounded transition-colors"
+            disabled={isPlacingOrder}
           >
             Cancel
           </button>
           <button
-            className={`px-4 py-1.5 text-white font-geist text-xs rounded transition-colors ${
-              mode === 'buy'
-                ? 'bg-green-500 hover:bg-green-600'
-                : 'bg-red-500 hover:bg-red-600'
-            }`}
+            onClick={handlePlaceOrder}
+            className="px-4 py-1.5 text-white font-geist text-xs rounded transition-colors"
+            style={{ backgroundColor: mode === 'buy' ? '#84cc16' : '#ef4444' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = mode === 'buy' ? '#059669' : '#dc2626'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = mode === 'buy' ? '#84cc16' : '#ef4444'}
+            disabled={isPlacingOrder}
           >
-            {mode === 'buy' ? 'Buy' : 'Sell'} {symbol}
+            {isPlacingOrder ? 'Placing...' : `${mode === 'buy' ? 'Buy' : 'Sell'} ${symbol}`}
           </button>
         </div>
       </div>
+
+      {/* Status Modal */}
+      <StatusModal
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </div>
   )
 }

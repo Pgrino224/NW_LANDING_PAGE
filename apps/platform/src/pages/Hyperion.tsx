@@ -1,14 +1,19 @@
+import SectionNavigation from '../components/shared/SectionNavigation'
+import Chrysoplos from '../components/hyperion/Chrysoplos'
+import Archetypes from '../components/hyperion/Archetypes'
+import TraitUpgrade from '../components/hyperion/TraitUpgrade'
+
 export default function Hyperion() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#1a1a1a',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      color: 'white'
-    }}>
-      <h1>Hyperion</h1>
-    </div>
-  )
+  const sections = [
+    // Section 1: Chrysoplos
+    <Chrysoplos key="chrysoplos" />,
+
+    // Section 2: Archetypes
+    <Archetypes key="archetypes" />,
+
+    // Section 3: Trait Upgrade
+    <TraitUpgrade key="trait-upgrade" />
+  ]
+
+  return <SectionNavigation sections={sections} />
 }
