@@ -23,6 +23,8 @@ export interface ChryspolosItem {
   isNew?: boolean
   aspectRequirements?: AspectRequirement[]
   resonanceRequired?: number
+  rolledValue?: number         // The rolled stat value (e.g., 5.2)
+  rolledStatName?: string      // What the stat represents (e.g., "Fee Reduction")
 }
 
 export interface Aspect {
@@ -82,7 +84,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Convergence_Algorithm',
     description: 'Limit orders that fill within 1% of market price get 5% fee reduction',
     owned: generateMockOwnership(0),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
+    aspectRequirements: [{ aspectName: 'Convergence Algorithm', required: 5 }],
     resonanceRequired: 50
   },
   {
@@ -97,8 +99,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Resonance_Protocol',
     description: 'Predictions with 80%+ confidence that win grant +10 resonance',
     owned: generateMockOwnership(1),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Resonance Protocol', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 11.3,
+    rolledStatName: 'Resonance Bonus'
   },
   {
     id: 'rare_003',
@@ -112,8 +116,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Equilibrium_Framework',
     description: 'Getting perfect chemistry (3 matching families) grants +1 AP each turn while that stack remains alive',
     owned: generateMockOwnership(2),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Equilibrium Framework', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 1.2,
+    rolledStatName: 'AP Bonus'
   },
   {
     id: 'rare_004',
@@ -127,7 +133,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Latency_Matrix',
     description: 'Limit orders sitting unfilled for 10+ minutes get 3% better fill price when executed',
     owned: generateMockOwnership(3),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
+    aspectRequirements: [{ aspectName: 'Latency Matrix', required: 5 }],
     resonanceRequired: 50
   },
   {
@@ -142,8 +148,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Recursion_Engine',
     description: 'Closing a profitable short position grants +5 resonance',
     owned: generateMockOwnership(4),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Recursion Engine', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 4.8,
+    rolledStatName: 'Resonance Bonus'
   },
   {
     id: 'rare_006',
@@ -157,8 +165,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Volatility_Sequence',
     description: 'When your stop loss triggers, get 2% of the loss back as NetWorth',
     owned: generateMockOwnership(5),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Volatility Sequence', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 1.7,
+    rolledStatName: 'Recovery Bonus'
   },
   {
     id: 'rare_007',
@@ -172,7 +182,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Entropy_Database',
     description: 'Fortresses remember who attacked them - deal +1 EV damage to repeat attackers',
     owned: generateMockOwnership(6),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
+    aspectRequirements: [{ aspectName: 'Entropy Database', required: 5 }],
     resonanceRequired: 50
   },
   {
@@ -187,8 +197,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Momentum_Architecture',
     description: 'Capturing 3 territories in consecutive turns grants +2 attack to all stacks',
     owned: generateMockOwnership(7),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Momentum Architecture', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 2.4,
+    rolledStatName: 'Attack Bonus'
   },
   {
     id: 'rare_009',
@@ -202,8 +214,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Parallax_Network',
     description: 'Making 5+ predictions in the same category in a row grants +2% more NetWorth from wins (bonus ends when you bet on a different category twice in a row)',
     owned: generateMockOwnership(8),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Parallax Network', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 2.1,
+    rolledStatName: 'Gains Bonus'
   },
   {
     id: 'rare_010',
@@ -217,7 +231,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Synthesis_Compiler',
     description: 'Once per game, ignore chemistry requirements for one stack',
     owned: generateMockOwnership(9),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
+    aspectRequirements: [{ aspectName: 'Synthesis Compiler', required: 5 }],
     resonanceRequired: 50
   },
   {
@@ -232,8 +246,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Amplitude_Server',
     description: 'Being first 10 to predict on a new market costs 5% less stake',
     owned: generateMockOwnership(10),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Amplitude Server', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 2.6,
+    rolledStatName: 'Stake Reduction'
   },
   {
     id: 'rare_012',
@@ -247,8 +263,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Frequency_Validator',
     description: 'Predicting against 70%+ consensus and winning grants +10% payout',
     owned: generateMockOwnership(11),
-    aspectRequirements: [{ aspectName: 'Shadow Shard', required: 5 }],
-    resonanceRequired: 50
+    aspectRequirements: [{ aspectName: 'Frequency Validator', required: 5 }],
+    resonanceRequired: 50,
+    rolledValue: 10.3,
+    rolledStatName: 'Payout Bonus'
   },
 
   // ============================================
@@ -265,7 +283,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'All_Weather_Protocol',
     description: 'Taking 3 losses in a row grants +40% on next win',
     owned: generateMockOwnership(12),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
+    aspectRequirements: [{ aspectName: 'All Weather Protocol', required: 10 }],
     resonanceRequired: 100
   },
   {
@@ -280,8 +298,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Friedman_Doctrine',
     description: 'Not using any protective features in DIONE (stop losses, limits) grants +15% to all gains',
     owned: generateMockOwnership(13),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
-    resonanceRequired: 100
+    aspectRequirements: [{ aspectName: 'Friedman Doctrine', required: 10 }],
+    resonanceRequired: 100,
+    rolledValue: 14.8,
+    rolledStatName: 'Gains Bonus'
   },
   {
     id: 'unique_003',
@@ -294,8 +314,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Eulers_Ruler',
     description: 'Being the top NetWorth earner in any given hour reduces your losses by 10% for the next hour',
     owned: generateMockOwnership(14),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
-    resonanceRequired: 100
+    aspectRequirements: [{ aspectName: "Euler's Ruler", required: 10 }],
+    resonanceRequired: 100,
+    rolledValue: 11.2,
+    rolledStatName: 'Loss Reduction'
   },
   {
     id: 'unique_004',
@@ -308,7 +330,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Newtons_Apple',
     description: 'When NetWorth drops by more than 10% in one day, next 3 actions have 15% fee reduction',
     owned: generateMockOwnership(15),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
+    aspectRequirements: [{ aspectName: "Newton's Apple", required: 10 }],
     resonanceRequired: 100
   },
   {
@@ -322,8 +344,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Turing_Test',
     description: 'Every 2nd LEDA match, DIONE trade, or THEMIS prediction costs 2% less fees',
     owned: generateMockOwnership(16),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
-    resonanceRequired: 100
+    aspectRequirements: [{ aspectName: 'Turing Test', required: 10 }],
+    resonanceRequired: 100,
+    rolledValue: 2.3,
+    rolledStatName: 'Fee Reduction'
   },
   {
     id: 'unique_006',
@@ -336,8 +360,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Atom_of_Bohr',
     description: '5% chance to bypass one fee per day completely',
     owned: generateMockOwnership(17),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
-    resonanceRequired: 100
+    aspectRequirements: [{ aspectName: 'Atom of Bohr', required: 10 }],
+    resonanceRequired: 100,
+    rolledValue: 4.7,
+    rolledStatName: 'Bypass Chance'
   },
   {
     id: 'unique_007',
@@ -350,7 +376,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Da_Vincis_Code',
     description: 'When NetWorth and Resonance are within 10% of each other, +10% gains',
     owned: generateMockOwnership(18),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
+    aspectRequirements: [{ aspectName: "Da Vinci's Code", required: 10 }],
     resonanceRequired: 100
   },
   {
@@ -364,8 +390,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Godels_Loop',
     description: 'Completing a full cycle (Win LEDA → Profit DIONE → Correct THEMIS) grants +20% to next cycle start',
     owned: generateMockOwnership(19),
-    aspectRequirements: [{ aspectName: 'Storm Fragment', required: 10 }],
-    resonanceRequired: 100
+    aspectRequirements: [{ aspectName: "Gödel's Loop", required: 10 }],
+    resonanceRequired: 100,
+    rolledValue: 15.4,
+    rolledStatName: 'Gains Bonus'
   },
 
   // ============================================
@@ -382,8 +410,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Fire_of_Prometheus',
     description: 'After 5 consecutive wins, enter "Ascended State" (+20% gains AND +20% losses for 1 hour)',
     owned: generateMockOwnership(20),
-    aspectRequirements: [{ aspectName: 'Void Essence', required: 20 }],
-    resonanceRequired: 200
+    aspectRequirements: [{ aspectName: 'Fire of Prometheus', required: 15 }],
+    resonanceRequired: 200,
+    rolledValue: 16.2,
+    rolledStatName: 'Gains Bonus'
   },
   {
     id: 'mythic_002',
@@ -396,7 +426,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Pandoras_Box',
     description: 'Once a month, gain back 10% of the NetWorth you lost that month only if you were negative PnL in NetWorth for that month',
     owned: generateMockOwnership(21),
-    aspectRequirements: [{ aspectName: 'Void Essence', required: 20 }],
+    aspectRequirements: [{ aspectName: "Pandora's Box", required: 15 }],
     resonanceRequired: 200
   },
   {
@@ -410,8 +440,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Wings_of_Icarus',
     description: "Each consecutive win increases next action's rewards by 1% (max 10%, resets on loss)",
     owned: generateMockOwnership(22),
-    aspectRequirements: [{ aspectName: 'Void Essence', required: 20 }],
-    resonanceRequired: 200
+    aspectRequirements: [{ aspectName: 'Wings of Icarus', required: 15 }],
+    resonanceRequired: 200,
+    rolledValue: 1.2,
+    rolledStatName: 'Gains Bonus'
   },
   {
     id: 'mythic_004',
@@ -424,8 +456,10 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Sisyphus_Rock',
     description: 'Once per day, your biggest loss is reduced by 50%',
     owned: generateMockOwnership(23),
-    aspectRequirements: [{ aspectName: 'Void Essence', required: 20 }],
-    resonanceRequired: 200
+    aspectRequirements: [{ aspectName: "Sisyphus' Rock", required: 15 }],
+    resonanceRequired: 200,
+    rolledValue: 51.8,
+    rolledStatName: 'Loss Reduction'
   },
   {
     id: 'mythic_005',
@@ -438,7 +472,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Midas_Touch',
     description: 'For one random hour, once a day, actions have a 50% chance to provide 50% increased NetWorth rewards',
     owned: generateMockOwnership(24),
-    aspectRequirements: [{ aspectName: 'Void Essence', required: 20 }],
+    aspectRequirements: [{ aspectName: 'Midas Touch', required: 15 }],
     resonanceRequired: 200
   },
 
@@ -456,7 +490,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'VVoid',
     description: '1% chance for any loss to become 0 NetWorth loss',
     owned: generateMockOwnership(25),
-    aspectRequirements: [{ aspectName: 'Glitch Core', required: 3 }],
+    aspectRequirements: [{ aspectName: 'VVoid', required: 20 }],
     resonanceRequired: 150
   },
   {
@@ -470,7 +504,7 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Sccorch',
     description: 'When your NetWorth ends in 7, your NEXT action doubles NetWorth gains',
     owned: generateMockOwnership(26),
-    aspectRequirements: [{ aspectName: 'Glitch Core', required: 3 }],
+    aspectRequirements: [{ aspectName: 'Sccorch', required: 20 }],
     resonanceRequired: 150
   },
   {
@@ -484,7 +518,65 @@ export const CHRYSOPLOS_LIBRARY: ChryspolosItem[] = [
     abilityName: 'Corre',
     description: 'Every 100th action triggers cascade: next 3 actions have random 0-200% multipliers',
     owned: generateMockOwnership(27),
-    aspectRequirements: [{ aspectName: 'Glitch Core', required: 3 }],
+    aspectRequirements: [{ aspectName: 'Corre', required: 20 }],
     resonanceRequired: 150
   }
 ]
+
+// ============================================
+// CHRYSOPLOS ROLLING UTILITIES
+// ============================================
+
+/**
+ * Rolls a random value from range in skillDescription
+ * Returns null if no range found (fixed effects like Synthesis Compiler, VVoid, etc.)
+ * Examples:
+ *   "3.5%-6.5%" → 5.2
+ *   "5-15 resonance" → 8.3
+ *   "0.5-1.5 AP" → 1.1
+ */
+export function rollChryspolosStat(skillDescription: string): number | null {
+  const rangeMatch = skillDescription.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/)
+
+  if (!rangeMatch) return null
+
+  const min = parseFloat(rangeMatch[1])
+  const max = parseFloat(rangeMatch[2])
+  const rolled = Math.random() * (max - min) + min
+
+  return Math.round(rolled * 10) / 10  // 1 decimal place
+}
+
+/**
+ * Extracts what stat is being rolled (e.g., "Fee Reduction", "Resonance Bonus")
+ */
+export function extractStatName(skillDescription: string): string {
+  const lowerDesc = skillDescription.toLowerCase()
+
+  if (lowerDesc.includes('fee')) return 'Fee Reduction'
+  if (lowerDesc.includes('resonance')) return 'Resonance Bonus'
+  if (lowerDesc.includes('ev damage')) return 'EV Damage Bonus'
+  if (lowerDesc.includes('attack')) return 'Attack Bonus'
+  if (lowerDesc.includes('gains') || lowerDesc.includes('rewards')) return 'Gains Bonus'
+  if (lowerDesc.includes('loss') && lowerDesc.includes('reduction')) return 'Loss Reduction'
+  if (lowerDesc.includes('payout')) return 'Payout Bonus'
+  if (lowerDesc.includes('ap')) return 'AP Bonus'
+  if (lowerDesc.includes('chance')) return 'Bypass Chance'
+  if (lowerDesc.includes('stake')) return 'Stake Reduction'
+  if (lowerDesc.includes('price')) return 'Price Improvement'
+  if (lowerDesc.includes('recovery')) return 'Recovery Bonus'
+
+  return 'Stat Bonus'  // Fallback
+}
+
+/**
+ * Formats rolled value for display (adds % if needed)
+ */
+export function formatRolledStat(
+  rolledValue: number,
+  skillDescription: string
+): string {
+  // Check if it's a percentage by looking for % in the range
+  const hasPercent = /\d+\.?\d*\s*-\s*\d+\.?\d*%/.test(skillDescription)
+  return hasPercent ? `${rolledValue}%` : `${rolledValue}`
+}

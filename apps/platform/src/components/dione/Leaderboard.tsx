@@ -54,12 +54,12 @@ export default function Leaderboard() {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-white/40 font-geist-mono border-b border-white/10">
-              <th className="text-left pt-2 pb-2 pl-4 pr-2 uppercase text-[10px]">Rank</th>
-              <th className="text-left pt-2 pb-2 px-2 uppercase text-[10px]">Trader</th>
-              <th className="text-right pt-2 pb-2 px-2 uppercase text-[10px]">PnL</th>
-              <th className="text-right pt-2 pb-2 px-2 uppercase text-[10px]">Trades</th>
-              <th className="text-right pt-2 pb-2 pl-2 pr-4 uppercase text-[10px]">WR</th>
+            <tr className="text-white/40 font-geist-mono-extralight border-b border-white/10">
+              <th className="text-left pt-2 pb-2 pl-4 pr-2 uppercase text-xs">Rank</th>
+              <th className="text-left pt-2 pb-2 px-2 uppercase text-xs">Trader</th>
+              <th className="text-right pt-2 pb-2 px-2 uppercase text-xs">PnL</th>
+              <th className="text-right pt-2 pb-2 px-2 uppercase text-xs">Trades</th>
+              <th className="text-right pt-2 pb-2 pl-2 pr-4 uppercase text-xs">WR</th>
             </tr>
           </thead>
           <tbody>

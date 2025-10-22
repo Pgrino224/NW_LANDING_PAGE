@@ -1,9 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ARCHETYPES, TRAIT_ICONS, type Archetype } from '../../services/hyperion/archetypes'
+import { useHyperion } from '../../contexts/HyperionContext'
 
 export default function Archetypes() {
+  const { activatedArchetype, setActivatedArchetype } = useHyperion()
   const [selectedIndex, setSelectedIndex] = useState(0) // Default to first archetype
   const selectedArchetype = ARCHETYPES[selectedIndex]
+
+  // Handler for activating an archetype
+  const handleActivate = () => {
+    if (selectedArchetype.isUnlocked) {
+      setActivatedArchetype(selectedArchetype)
+    }
+  }
 
   // Calculate offset to keep selected card perfectly centered (like game carousels)
   const calculateOffset = useCallback((index: number) => {
@@ -84,12 +93,12 @@ export default function Archetypes() {
       }}
     >
       {/* Character Image */}
-      <div className="absolute inset-0 z-0 flex items-center justify-start pl-16">
-        <div className="relative w-[50%] h-full flex items-center justify-center">
+      <div className="absolute inset-0 z-0 flex items-start justify-start">
+        <div className="relative w-[65vh] h-full flex items-start justify-center">
           <img
-            src={`/hyperion/archetypes/${selectedArchetype.tier.toLowerCase()}/${selectedArchetype.id.replace('the-', '')}.png`}
+            src={`/shared/archetypes/archetype-webp/${selectedArchetype.tier.toLowerCase()}/${selectedArchetype.id.replace('the-', '')}.webp`}
             alt={selectedArchetype.name}
-            className="h-[85%] w-auto object-contain transition-opacity duration-500"
+            className="h-full w-full object-cover object-top transition-opacity duration-500"
             style={{
               filter: 'drop-shadow(0 0 40px rgba(0, 0, 0, 0.5))'
             }}
@@ -101,60 +110,82 @@ export default function Archetypes() {
 
       {/* Main Container */}
       <div className="relative z-10 w-full h-full flex flex-col">
-        {/* Title */}
-        <div className="px-8 py-6">
-          <div className="flex items-center gap-3">
+        {/* Title and Info Panel Row - Same Level */}
+        <div className="flex-1 flex items-start justify-between pl-8 lg:pl-12 xl:pl-16 pr-4 lg:pr-6 xl:pr-8 py-6 gap-8">
+          {/* Title - Left Side */}
+          <div className="flex items-center gap-3 flex-shrink-0">
             <img src="/hyperion/title-icons/archetypes.svg" alt="" className="w-12 h-12" />
             <h1 className="font-geist-bold text-white text-3xl">ARCHETYPES</h1>
           </div>
-        </div>
 
-        {/* Content Area - Right Side Info Panel */}
-        <div className="flex-1 flex items-start justify-end px-16 pt-12">
-          <div className="w-[500px] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-8 space-y-6">
-            {/* NMTI Code */}
-            <div className="text-cyan-400 text-sm uppercase tracking-widest font-['Geist_Mono']">
-              {selectedArchetype.nmtiCode}
+          {/* Info Panel - Right Side */}
+          <div className="w-full max-w-[850px] max-h-[calc(100vh-300px)] overflow-y-auto bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-8 lg:p-10 xl:p-12 space-y-6 lg:space-y-7 xl:space-y-8">
+              {/* Archetype Name */}
+              <h2 className="text-white text-4xl lg:text-6xl xl:text-7xl font-black uppercase leading-tight tracking-wide" style={{ fontFamily: 'Geist, sans-serif', fontWeight: 900 }}>
+                {selectedArchetype.name}
+              </h2>
+
+              {/* Horizontal Separator */}
+              <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+
+              {/* NMTI Code - Letter Boxes */}
+              <div className="flex gap-2 lg:gap-3">
+                {selectedArchetype.nmtiCode.split('').map((letter, index) => (
+                  <div
+                    key={index}
+                    className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-2 border-cyan-400/60 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20"
+                  >
+                    <span className="text-cyan-300 text-xl lg:text-2xl font-['Geist_Mono'] font-bold">
+                      {letter}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Horizontal Separator */}
+              <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+
+              {/* Trait Icons */}
+              <div className="flex gap-2 lg:gap-3 xl:gap-4 flex-wrap">
+                {selectedArchetype.traits.map((trait) => (
+                  <div
+                    key={trait}
+                    className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-md bg-white/10 border border-white/20 flex items-center justify-center p-2 lg:p-2.5 xl:p-3 hover:bg-white/15 transition-all duration-300"
+                  >
+                    <img
+                      src={TRAIT_ICONS[trait]}
+                      alt={trait}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Personality Quote */}
+              <p className="text-white/90 italic text-lg lg:text-xl xl:text-2xl leading-relaxed font-['Geist_Mono']">
+                "{selectedArchetype.personality}"
+              </p>
+
+              {/* Lore */}
+              <p className="text-white/70 text-base lg:text-lg leading-relaxed font-['Geist']">
+                {selectedArchetype.lore}
+              </p>
             </div>
-
-            {/* Archetype Name */}
-            <h2 className="text-white text-5xl font-['Geist_Mono'] font-semibold leading-tight">
-              {selectedArchetype.name}
-            </h2>
-
-            {/* Trait Icons */}
-            <div className="flex gap-3">
-              {selectedArchetype.traits.map((trait) => (
-                <div
-                  key={trait}
-                  className="w-14 h-14 rounded-md bg-white/10 border border-white/20 flex items-center justify-center p-2"
-                >
-                  <img
-                    src={TRAIT_ICONS[trait]}
-                    alt={trait}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Personality Quote */}
-            <p className="text-white/90 italic text-lg leading-relaxed font-['Geist_Mono']">
-              "{selectedArchetype.personality}"
-            </p>
-
-            {/* Theme */}
-            <p className="text-white/70 text-base leading-relaxed font-['Geist_Mono']">
-              {selectedArchetype.theme}
-            </p>
           </div>
         </div>
 
         {/* ACTIVATE Button - Centered Above Carousel */}
         <div className="absolute bottom-[180px] left-1/2 -translate-x-1/2 z-20 w-[200px]">
           {selectedArchetype.isUnlocked ? (
-            <button className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white uppercase tracking-wider font-['Geist_Mono'] font-bold text-base transition-all duration-300 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/50 hover:scale-[1.02]">
-              ACTIVATE
+            <button
+              onClick={handleActivate}
+              className={`w-full py-3 uppercase tracking-wider font-['Geist_Mono'] font-bold text-base transition-all duration-300 ${
+                activatedArchetype?.id === selectedArchetype.id
+                  ? 'bg-gradient-to-r from-cyan-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/30'
+                  : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/50 hover:scale-[1.02]'
+              }`}
+            >
+              {activatedArchetype?.id === selectedArchetype.id ? 'ACTIVATED' : 'ACTIVATE'}
             </button>
           ) : (
             <div className="w-full py-3 bg-red-900/30 border-2 border-red-700/50 text-red-400 uppercase tracking-wider font-['Geist_Mono'] font-bold text-base flex items-center justify-center gap-2">
@@ -167,7 +198,7 @@ export default function Archetypes() {
         </div>
 
         {/* Bottom Horizontal Carousel */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent py-8">
+        <div className="absolute bottom-0 left-0 right-0 py-8">
           {/* Left Navigation Arrow - Always visible */}
           <button
             onClick={() => scrollBy('left')}
@@ -198,13 +229,18 @@ export default function Archetypes() {
             </svg>
           </button>
 
-          {/* Carousel Container with fade gradients */}
-          <div className="relative w-full h-[100px] flex items-center justify-center overflow-hidden">
-            {/* Left fade gradient */}
-            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black via-black/80 to-transparent z-10 pointer-events-none" />
+          {/* Navigation Hint */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="text-white/40 text-xs uppercase tracking-wider font-['Geist_Mono']">
+              Use arrow keys or click to navigate
+            </div>
+            <div className="text-white/60 text-xs font-['Geist_Mono']">
+              {selectedIndex + 1} / {ARCHETYPES.length}
+            </div>
+          </div>
 
-            {/* Right fade gradient */}
-            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black via-black/80 to-transparent z-10 pointer-events-none" />
+          {/* Carousel Container */}
+          <div className="relative w-full h-[100px] flex items-center justify-center overflow-hidden">
 
             {/* Carousel Track */}
             <div
@@ -241,14 +277,25 @@ export default function Archetypes() {
                     >
                       {/* Thumbnail Preview Area - Counter-skewed content */}
                       <div
-                        className="absolute inset-0 bg-gradient-to-br from-gray-800/60 to-gray-900/80 flex items-center justify-center"
+                        className="absolute inset-0 overflow-hidden"
                         style={{ transform: 'skewX(8deg)' }}
                       >
-                        <span className={`font-bold font-['Geist_Mono'] transition-all duration-300 ${
-                          isSelected ? 'text-lg text-gray-400' : 'text-sm text-gray-600'
-                        }`}>
-                          {archetype.nmtiCode}
-                        </span>
+                        <img
+                          src={`/shared/archetypes/archetype-webp/${archetype.tier.toLowerCase()}/${archetype.id.replace('the-', '')}.webp`}
+                          alt={archetype.name}
+                          className="w-full h-full object-cover object-top transition-all duration-300"
+                          style={{
+                            filter: isSelected ? 'brightness(1.2)' : 'brightness(1.0)'
+                          }}
+                        />
+                        {/* NMTI Code overlay at bottom */}
+                        <div className="absolute bottom-1 left-0 right-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                          <span className={`font-bold font-['Geist_Mono'] text-white drop-shadow-lg transition-all duration-300 ${
+                            isSelected ? 'text-xs' : 'text-[10px]'
+                          }`}>
+                            {archetype.nmtiCode}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Lock Overlay - Counter-skewed */}
@@ -279,18 +326,7 @@ export default function Archetypes() {
               })}
             </div>
           </div>
-
-          {/* Navigation Hint */}
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <div className="text-white/40 text-xs uppercase tracking-wider font-['Geist_Mono']">
-              Use arrow keys or click to navigate
-            </div>
-            <div className="text-white/60 text-xs font-['Geist_Mono']">
-              {selectedIndex + 1} / {ARCHETYPES.length}
-            </div>
-          </div>
         </div>
-      </div>
     </div>
   )
 }

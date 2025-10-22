@@ -193,13 +193,13 @@ export default function TradeHistory() {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-white/40 font-geist-mono border-b border-white/10">
-              <th className="text-left pt-2 pb-2 pl-4 pr-2 uppercase text-[10px]">Time</th>
-              <th className="text-left pt-2 pb-2 px-2 uppercase text-[10px]">Symbol</th>
-              <th className="text-left pt-2 pb-2 px-2 uppercase text-[10px]">Type</th>
-              <th className="text-right pt-2 pb-2 px-2 uppercase text-[10px]">Size</th>
-              <th className="text-right pt-2 pb-2 px-2 uppercase text-[10px]">Price</th>
-              <th className="text-right pt-2 pb-2 pl-2 pr-4 uppercase text-[10px]">PnL</th>
+            <tr className="text-white/40 font-geist-mono-extralight border-b border-white/10">
+              <th className="text-left pt-2 pb-2 pl-4 pr-2 uppercase text-xs">Time</th>
+              <th className="text-left pt-2 pb-2 px-2 uppercase text-xs">Symbol</th>
+              <th className="text-left pt-2 pb-2 px-2 uppercase text-xs">Type</th>
+              <th className="text-right pt-2 pb-2 px-2 uppercase text-xs">Size</th>
+              <th className="text-right pt-2 pb-2 px-2 uppercase text-xs">Price</th>
+              <th className="text-right pt-2 pb-2 pl-2 pr-4 uppercase text-xs">PnL</th>
             </tr>
           </thead>
           <tbody>

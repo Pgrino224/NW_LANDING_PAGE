@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBalance } from '../../contexts/BalanceContext'
+import { useHyperion } from '../../contexts/HyperionContext'
+import { useModuleSelector } from '../../contexts/ModuleSelectorContext'
+import { TIER_COLORS } from '../hyperion/types'
+import MiniRadarChart from './MiniRadarChart'
 
 interface HubPanelProps {
   isOpen: boolean
@@ -35,11 +40,37 @@ const mockChatHistory: ChatMessage[] = [
   { id: '3', sender: 'minerva', content: 'You currently hold 100 shares of NVDA, 50 shares of AAPL, and 75 shares of MSFT. Your portfolio value is $45,320.50 with an unrealized PNL of +$1,250.75.', timestamp: '10:24 AM' },
 ]
 
+// Mock trait data for Quick Actions radar chart
+const TRAITS_DATA = [
+  { id: 'reason', name: 'Reason', icon: '/hyperion/traits/analysis.svg', level: 3.5, maxLevel: 7.0 },
+  { id: 'valor', name: 'Valor', icon: '/hyperion/traits/innovation.svg', level: 2.0, maxLevel: 7.0 },
+  { id: 'guard', name: 'Guard', icon: '/hyperion/traits/preservation.svg', level: 4.2, maxLevel: 7.0 },
+  { id: 'accord', name: 'Accord', icon: '/hyperion/traits/resilience.svg', level: 1.5, maxLevel: 7.0 },
+  { id: 'will', name: 'Will', icon: '/hyperion/traits/confidence.svg', level: 5.0, maxLevel: 7.0 },
+  { id: 'flex', name: 'Flex', icon: '/hyperion/traits/versatility.svg', level: 2.8, maxLevel: 7.0 },
+  { id: 'foresight', name: 'Foresight', icon: '/hyperion/traits/vision.svg', level: 3.0, maxLevel: 7.0 },
+  { id: 'strike', name: 'Strike', icon: '/hyperion/traits/execution.svg', level: 4.5, maxLevel: 7.0 },
+  { id: 'mind', name: 'Mind', icon: '/hyperion/traits/spirit.svg', level: 1.8, maxLevel: 7.0 },
+  { id: 'truth', name: 'Truth', icon: '/hyperion/traits/integrity.svg', level: 3.2, maxLevel: 7.0 },
+]
+
+// Helper function to convert Chrysoplos name to image filename
+const getImageFilename = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[']/g, '')
+    .replace(/ö/g, 'o')
+    .replace(/\s+/g, '-')
+}
+
 export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanelProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(mockChatHistory)
   const [inputMessage, setInputMessage] = useState('')
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null)
   const { balances } = useBalance()
+  const { equippedChrysoplos, activatedArchetype } = useHyperion()
+  const { setCurrentModule } = useModuleSelector()
+  const navigate = useNavigate()
   const [openConversation, setOpenConversation] = useState<Message | null>(null)
   const [conversationMessages, setConversationMessages] = useState<ChatMessage[]>([])
   const [expandedView, setExpandedView] = useState<'messages' | 'syncr' | null>(null)
@@ -156,98 +187,172 @@ export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanel
                   gridTemplateColumns: 'repeat(6, 1fr)',
                   gridTemplateRows: 'repeat(5, 1fr)'
                 }}>
-                {/* Unified Profile Card - Profile + Chrysoplos + Archetype */}
+                {/* Unified Profile Card - Full Gradient Background */}
                 <div
-                  className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-6 flex flex-col shadow-lg hover:shadow-xl transition-all duration-300 hover:border-white/30"
+                  className="relative bg-gradient-to-br from-purple-900/40 via-blue-900/40 to-cyan-900/40 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:border-white/30 flex flex-col"
                   style={{ gridColumn: '1 / 5', gridRow: '1 / 4' }}
                 >
-                  {/* Header Row - Avatar, Wallet, Balances, Settings */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <span className="text-white text-3xl font-geist-mono">0x</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-geist font-medium text-base truncate mb-1">0x742d...4a8c</h4>
-                      <p className="text-white/50 text-sm font-geist-mono-extralight">Connected</p>
-                    </div>
+                  {/* Settings Button - Top Right */}
+                  <button
+                    onClick={onSettingsClick}
+                    className="absolute top-4 right-4 p-2.5 hover:bg-white/10 rounded-xl transition-colors z-10"
+                  >
+                    <svg className="w-5 h-5 text-white/60 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
 
-                    {/* Token Balances - Horizontal */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
-                          <img src="/shared/token-logos/webp/networth.webp" alt="Networth" className="w-full h-full object-cover" />
-                        </div>
-                        <p className="text-white text-[10px] font-geist-mono-regular">{balances.networth.toLocaleString()}</p>
+                  {/* Profile Section - Horizontal Layout */}
+                  <div className="px-6 pt-6 pb-4 flex items-center">
+                    {/* Profile Image + Username/Connected + Token Balances - All Grouped */}
+                    <div className="flex items-center gap-6">
+                      {/* Profile Image */}
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center border-3 border-gray-900 shadow-xl flex-shrink-0">
+                        <span className="text-white text-2xl font-geist-mono">0x</span>
                       </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
-                          <img src="/shared/token-logos/webp/influence.webp" alt="Influence" className="w-full h-full object-cover" />
-                        </div>
-                        <p className="text-white text-[10px] font-geist-mono-regular">{balances.influence.toLocaleString()}</p>
+
+                      {/* Username and Status */}
+                      <div className="flex flex-col">
+                        <h4 className="text-white font-geist font-medium text-lg truncate mb-1">0x742d...4a8c</h4>
+                        <p className="text-white/50 text-sm font-geist-mono-extralight">Connected</p>
                       </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
-                          <img src="/shared/token-logos/webp/resonance.webp" alt="Resonance" className="w-full h-full object-cover" />
+
+                      {/* Token Balances - Next to Username */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src="/shared/token-logos/svg-white/networth-logo.svg" alt="Networth" className="w-full h-full object-contain p-1" />
+                          </div>
+                          <p className="text-white text-[10px] font-geist-mono-regular">{balances.networth.toLocaleString()}</p>
                         </div>
-                        <p className="text-white text-[10px] font-geist-mono-regular">{balances.resonance.toLocaleString()}</p>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src="/shared/token-logos/svg-white/influence-logo.svg" alt="Influence" className="w-full h-full object-contain p-1" />
+                          </div>
+                          <p className="text-white text-[10px] font-geist-mono-regular">{balances.influence.toLocaleString()}</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src="/shared/token-logos/svg-white/resonance-logo.svg" alt="Resonance" className="w-full h-full object-contain p-1" />
+                          </div>
+                          <p className="text-white text-[10px] font-geist-mono-regular">{balances.resonance.toLocaleString()}</p>
+                        </div>
                       </div>
                     </div>
-
-                    <button
-                      onClick={onSettingsClick}
-                      className="p-2.5 hover:bg-white/10 rounded-xl transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-white/60 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
                   </div>
 
                   {/* Chrysoplos & Archetype - Side by Side */}
-                  <div className="grid grid-cols-2 gap-3 flex-1">
-                    {/* Chrysoplos */}
-                    <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-purple-600/20 to-pink-600/20 p-4 flex flex-col justify-center">
-                      <div className="flex flex-col items-center text-center gap-3">
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center">
-                          <svg className="w-7 h-7 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                  <div className="flex-1 flex flex-col justify-end">
+                    <div className="grid grid-cols-2 gap-3 px-6 pb-5">
+                    {/* Chrysoplos Card */}
+                    {equippedChrysoplos ? (
+                      <button
+                        onClick={() => setCurrentModule('hyperion')}
+                        className="relative rounded-2xl overflow-hidden border-2 py-4 px-3 min-h-[140px] flex flex-col justify-center transition-all hover:scale-[1.02] cursor-pointer"
+                        style={{
+                          borderColor: TIER_COLORS[equippedChrysoplos.tier] + '80',
+                          backgroundColor: TIER_COLORS[equippedChrysoplos.tier] + '15'
+                        }}
+                      >
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <div className="w-48 h-48 rounded-xl flex items-center justify-center relative">
+                            <img
+                              src={`/hyperion/chrysoplos-images/${getImageFilename(equippedChrysoplos.name)}.png`}
+                              alt={equippedChrysoplos.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-white text-sm font-geist font-medium mb-1">{equippedChrysoplos.name}</p>
+                            <p className="text-white/70 text-xs font-geist-mono-extralight">{equippedChrysoplos.tagline}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white text-sm font-geist font-medium mb-1">Speed Demon</p>
-                          <p className="text-white/70 text-xs font-geist">+15% speed</p>
+                      </button>
+                    ) : (
+                      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-gray-600/20 to-gray-700/20 py-4 px-3 min-h-[140px] flex flex-col justify-center">
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-white/60 text-xs font-geist">No Chrysoplos</p>
+                            <p className="text-white/40 text-xs font-geist-mono-extralight">Visit Hyperion</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Archetype */}
-                    <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-amber-600/20 to-orange-600/20 p-4 flex flex-col justify-center">
-                      <div className="flex flex-col items-center text-center gap-3">
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-600/30 to-orange-600/30 flex items-center justify-center">
-                          <svg className="w-7 h-7 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
+                    {/* Archetype Card */}
+                    {activatedArchetype ? (
+                      <button
+                        onClick={() => setCurrentModule('hyperion')}
+                        className="relative rounded-2xl overflow-hidden border-2 min-h-[140px] transition-all hover:scale-[1.02] cursor-pointer"
+                        style={{
+                          borderColor: activatedArchetype.tierColor + '80'
+                        }}
+                      >
+                        {/* Full background archetype image */}
+                        <img
+                          src={`/shared/archetypes/archetype-webp/${activatedArchetype.tier.toLowerCase()}/${activatedArchetype.id.replace('the-', '')}.webp`}
+                          alt={activatedArchetype.name}
+                          className="absolute inset-0 w-full h-full object-cover object-top"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+
+                        {/* Gradient overlay for text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80"></div>
+
+                        {/* Text content overlaid on image */}
+                        <div className="relative z-10 flex flex-col items-center justify-end h-full pb-4 px-3">
+                          <p className="text-white text-sm font-geist font-medium mb-1 drop-shadow-lg">{activatedArchetype.name}</p>
+                          <p className="text-white/90 text-xs font-geist-mono-extralight drop-shadow-lg">{activatedArchetype.tier}</p>
                         </div>
-                        <div>
-                          <p className="text-white text-sm font-geist font-medium">Strategist</p>
-                          <p className="text-white/70 text-xs font-geist">Archetype</p>
+                      </button>
+                    ) : (
+                      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-gray-600/20 to-gray-700/20 py-4 px-3 min-h-[140px] flex flex-col justify-center">
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-white/60 text-xs font-geist">No Archetype</p>
+                            <p className="text-white/40 text-xs font-geist-mono-extralight">Visit Hyperion</p>
+                          </div>
                         </div>
                       </div>
+                    )}
                     </div>
                   </div>
                 </div>
 
-                {/* Another Card (TBD) */}
+                {/* Quick Actions - Trait Overview */}
                 <div
                   className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-5 flex flex-col shadow-lg hover:shadow-xl transition-all duration-300 hover:border-white/30"
                   style={{ gridColumn: '1 / 3', gridRow: '4 / 6' }}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-white font-geist text-sm font-medium">Quick Actions</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-geist text-sm font-medium">Trait Profile</span>
+                    <button
+                      onClick={() => navigate('/hyperion?section=2')}
+                      className="text-white/60 hover:text-white transition-colors text-xs font-geist-mono-regular"
+                    >
+                      View All →
+                    </button>
                   </div>
                   <div className="flex-1 flex items-center justify-center">
-                    <p className="text-white/40 text-xs font-geist">TBD</p>
+                    <MiniRadarChart traits={TRAITS_DATA} size={220} />
                   </div>
                 </div>
 
@@ -334,10 +439,9 @@ export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanel
                             <div
                               className={`max-w-[80%] rounded-2xl p-2.5 shadow-sm ${
                                 msg.sender === 'user'
-                                  ? 'text-white border border-white/10'
+                                  ? 'bg-gradient-to-br from-white/15 to-white/10 backdrop-blur-xl text-white border-2 border-white/30'
                                   : 'bg-white/10 text-white border border-white/10'
                               }`}
-                              style={msg.sender === 'user' ? { backgroundColor: '#ff8480' } : {}}
                             >
                               <p className="text-xs font-geist leading-relaxed">{msg.content}</p>
                             </div>
@@ -359,8 +463,7 @@ export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanel
                         />
                         <button
                           onClick={handleSendConversationMessage}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white p-1.5 rounded-xl transition-all hover:opacity-80"
-                          style={{ backgroundColor: '#ff8480' }}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-gradient-to-br from-white/20 to-white/15 backdrop-blur-xl text-white p-1.5 rounded-xl border-2 border-white/40 transition-all hover:border-white/50 hover:from-white/25 hover:to-white/20"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -399,10 +502,9 @@ export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanel
                         <div
                           className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${
                             msg.sender === 'user'
-                              ? 'text-white border border-white/10'
+                              ? 'bg-gradient-to-br from-white/15 to-white/10 backdrop-blur-xl text-white border-2 border-white/30'
                               : 'bg-white/10 text-white border border-white/10'
                           }`}
-                          style={msg.sender === 'user' ? { backgroundColor: '#ff8480' } : {}}
                         >
                           <p className="text-sm font-geist leading-relaxed">{msg.content}</p>
                         </div>
@@ -424,8 +526,7 @@ export default function HubPanel({ isOpen, onToggle, onSettingsClick }: HubPanel
                     />
                     <button
                       onClick={handleSendMessage}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white p-1.5 rounded-xl transition-all hover:opacity-80"
-                      style={{ backgroundColor: '#ff8480' }}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-gradient-to-br from-white/20 to-white/15 backdrop-blur-xl text-white p-1.5 rounded-xl border-2 border-white/40 transition-all hover:border-white/50 hover:from-white/25 hover:to-white/20"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

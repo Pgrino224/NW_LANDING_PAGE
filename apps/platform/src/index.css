@@ -133,34 +133,34 @@ html, body {
   font-weight: 700;
 }
 
-/* Legacy Geist Mono - Keep for backwards compatibility but map to Geist Sans */
+/* Geist Mono - Monospace Font */
 .font-geist-mono {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 400;
 }
 
 .font-geist-mono-extralight {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 200;
 }
 
 .font-geist-mono-regular {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 400;
 }
 
 .font-geist-mono-medium {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 500;
 }
 
 .font-geist-mono-semibold {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 700;
 }
 
 .font-geist-mono-bold {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 700;
 }
 

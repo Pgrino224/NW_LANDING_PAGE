@@ -15,6 +15,7 @@ import { SavedMarketsProvider } from './contexts/SavedMarketsContext'
 import { BalanceProvider } from './contexts/BalanceContext'
 import { OrdersProvider } from './contexts/OrdersContext'
 import { ModuleSelectorProvider, useModuleSelector } from './contexts/ModuleSelectorContext'
+import { HyperionProvider } from './contexts/HyperionContext'
 
 function AppContent() {
   const { isOverlayOpen, closeOverlay, toggleOverlay } = useModuleSelector()
@@ -78,11 +79,13 @@ function App() {
       {!isLoading && (
         <BalanceProvider>
           <OrdersProvider>
-            <SavedMarketsProvider>
-              <ModuleSelectorProvider>
-                <AppContent />
-              </ModuleSelectorProvider>
-            </SavedMarketsProvider>
+            <HyperionProvider>
+              <SavedMarketsProvider>
+                <ModuleSelectorProvider>
+                  <AppContent />
+                </ModuleSelectorProvider>
+              </SavedMarketsProvider>
+            </HyperionProvider>
           </OrdersProvider>
         </BalanceProvider>
       )}

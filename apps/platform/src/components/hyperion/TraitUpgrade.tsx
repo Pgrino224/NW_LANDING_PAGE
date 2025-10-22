@@ -11,6 +11,19 @@ interface Trait {
   maxLevel: number
 }
 
+const TRAIT_COLORS: Record<string, string> = {
+  'analysis': '#1F2937',      // Dark Gray/Black
+  'confidence': '#F59E0B',    // Amber/Gold
+  'execution': '#EF4444',     // Red
+  'innovation': '#8B5CF6',    // Purple
+  'integrity': '#10B981',     // Emerald Green
+  'preservation': '#06B6D4',  // Cyan
+  'resilience': '#F97316',    // Orange
+  'spirit': '#3B82F6',        // Blue
+  'versatility': '#14B8A6',   // Teal
+  'vision': '#A855F7'         // Light Purple
+}
+
 const TRAITS_DATA: Trait[] = [
   { id: 'analysis', name: 'Analysis', icon: '/hyperion/traits/analysis.svg', level: 3.5, maxLevel: 7.0 },
   { id: 'confidence', name: 'Confidence', icon: '/hyperion/traits/confidence.svg', level: 2.0, maxLevel: 7.0 },
@@ -119,10 +132,6 @@ export default function TraitUpgrade() {
     setPendingUpgrades({})
   }
 
-  // Split traits into two columns
-  const leftColumnTraits = traits.slice(0, 5)
-  const rightColumnTraits = traits.slice(5, 10)
-
   return (
     <div
       className="w-full h-screen relative overflow-y-auto custom-scrollbar font-['Geist']"
@@ -144,184 +153,126 @@ export default function TraitUpgrade() {
 
         <div className="px-8 pb-8">
           <div className="max-w-[1200px] mx-auto space-y-6">
-            {/* Top Row: Empty space (left) + Balance Card with buttons (right) */}
-            <div className="grid grid-cols-[600px_550px] gap-12">
-              {/* Empty space on left */}
-              <div></div>
+            {/* Top Row: Balance Card with buttons spanning full width */}
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-4">
+              <div className="flex items-center justify-between gap-4">
+                {/* Cancel and Confirm Buttons side by side */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancel}
+                    disabled={getTotalPendingUpgrades() === 0}
+                    className={`px-4 py-2 rounded-lg font-['Geist_Mono'] text-sm font-semibold transition-all duration-300 ${
+                      getTotalPendingUpgrades() === 0
+                        ? 'bg-white/10 text-white/40 cursor-not-allowed border border-white/20'
+                        : 'bg-white/20 text-white border border-white/30 hover:bg-white/30'
+                    }`}
+                  >
+                    CANCEL
+                  </button>
 
-              {/* Resonance Balance Card with buttons inside */}
-              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-4">
-                <div className="flex items-center justify-between gap-4">
-                  {/* Cancel and Confirm Buttons side by side */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleCancel}
-                      disabled={getTotalPendingUpgrades() === 0}
-                      className={`px-4 py-2 rounded-lg font-['Geist_Mono'] text-sm font-semibold transition-all duration-300 ${
-                        getTotalPendingUpgrades() === 0
-                          ? 'bg-white/10 text-white/40 cursor-not-allowed border border-white/20'
-                          : 'bg-white/20 text-white border border-white/30 hover:bg-white/30'
-                      }`}
-                    >
-                      CANCEL
-                    </button>
+                  <button
+                    onClick={handleConfirmUpgrades}
+                    disabled={getTotalPendingUpgrades() === 0}
+                    className={`px-4 py-2 rounded-lg font-['Geist_Mono'] text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-1 whitespace-nowrap ${
+                      getTotalPendingUpgrades() === 0
+                        ? 'bg-white/10 text-white/40 cursor-not-allowed border border-white/20'
+                        : 'text-white shadow-lg hover:shadow-xl hover:scale-105'
+                    }`}
+                    style={getTotalPendingUpgrades() > 0 ? { backgroundColor: '#84cc16', boxShadow: '0 10px 15px -3px rgba(132, 204, 22, 0.3)' } : {}}
+                  >
+                    <span>CONFIRM</span>
+                    {getTotalPendingUpgrades() > 0 && (
+                      <span className="flex items-center gap-1 text-xs">
+                        ({calculateTotalCost()} <ResonanceIcon className="w-3 h-3" />)
+                      </span>
+                    )}
+                  </button>
+                </div>
 
-                    <button
-                      onClick={handleConfirmUpgrades}
-                      disabled={getTotalPendingUpgrades() === 0}
-                      className={`px-4 py-2 rounded-lg font-['Geist_Mono'] text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-1 whitespace-nowrap ${
-                        getTotalPendingUpgrades() === 0
-                          ? 'bg-white/10 text-white/40 cursor-not-allowed border border-white/20'
-                          : 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105'
-                      }`}
-                    >
-                      <span>CONFIRM</span>
-                      {getTotalPendingUpgrades() > 0 && (
-                        <span className="flex items-center gap-1 text-xs">
-                          ({calculateTotalCost()} <ResonanceIcon className="w-3 h-3" />)
-                        </span>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Resonance Balance on right */}
-                  <div className="flex items-center gap-3">
-                    <ResonanceIcon className="w-6 h-6" />
-                    <span className="text-white font-geist-mono text-2xl font-bold">
-                      {balances.resonance.toLocaleString()}
-                    </span>
-                    <span className="text-white/60 font-['Geist_Mono'] text-xs">
-                      RESONANCE
-                    </span>
-                  </div>
+                {/* Resonance Balance on right */}
+                <div className="flex items-center gap-3">
+                  <ResonanceIcon className="w-6 h-6" />
+                  <span className="text-white font-geist-mono text-2xl font-bold">
+                    {balances.resonance.toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Main Content: Radar Chart + Trait Grid */}
+            {/* Main Content: Radar Chart + Single Column Trait List */}
             <div className="grid grid-cols-[600px_550px] gap-12">
               {/* Left: Radar Chart */}
               <div>
                 <TraitsRadarChart traits={traits} pendingUpgrades={pendingUpgrades} />
               </div>
 
-              {/* Right: Two-Column Trait Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Left Column - All 5 traits */}
-                <div className="space-y-3">
-                  {leftColumnTraits.map((trait) => (
-                  <div key={trait.id} className="space-y-2">
-                    {/* Top Card: Icon + Name + Max Level */}
-                    <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-3 flex items-center gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-white/10 border border-white/20 flex items-center justify-center p-1.5">
-                        <img
-                          src={trait.icon}
-                          alt={trait.name}
-                          className="w-full h-full object-contain filter brightness-0 invert"
-                        />
-                      </div>
-                      <span className="text-white font-['Geist_Mono'] text-sm font-medium flex-1">
-                        {trait.name}
-                      </span>
-                      <span className="font-['Geist_Mono'] text-sm">
-                        <span className="text-white font-bold">{(trait.level + (pendingUpgrades[trait.id] || 0) * 0.1).toFixed(1)}</span>
-                        <span className="text-white/40 text-xs">/{trait.maxLevel.toFixed(1)}</span>
-                      </span>
-                    </div>
-
-                    {/* Bottom Card: Controls */}
-                    <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-3 flex items-center gap-3">
-                      <button
-                        onClick={() => decrementUpgrade(trait.id)}
-                        disabled={(pendingUpgrades[trait.id] || 0) <= 0}
-                        className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
-                          (pendingUpgrades[trait.id] || 0) <= 0
-                            ? 'bg-white/20 text-white/40 cursor-not-allowed'
-                            : 'bg-white/30 text-white hover:bg-white/40'
-                        }`}
-                      >
-                        <span className="text-lg leading-none">−</span>
-                      </button>
-
-                      <div className="flex-1 text-center">
-                        <span className="text-white font-geist-mono text-lg font-bold">
-                          {(trait.level + (pendingUpgrades[trait.id] || 0) * 0.1).toFixed(1)}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => incrementUpgrade(trait.id)}
-                        disabled={trait.level >= trait.maxLevel}
-                        className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
-                          trait.level >= trait.maxLevel
-                            ? 'bg-white/20 text-white/40 cursor-not-allowed'
-                            : 'bg-white/30 text-white hover:bg-white/40'
-                        }`}
-                      >
-                        <span className="text-lg leading-none">+</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Right Column - 5 traits */}
+              {/* Right: Single Column Trait List */}
               <div className="space-y-3">
-                {rightColumnTraits.map((trait) => (
-                  <div key={trait.id} className="space-y-2">
-                    {/* Top Card: Icon + Name + Max Level */}
-                    <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-3 flex items-center gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-md bg-white/10 border border-white/20 flex items-center justify-center p-1.5">
-                        <img
-                          src={trait.icon}
-                          alt={trait.name}
-                          className="w-full h-full object-contain filter brightness-0 invert"
-                        />
-                      </div>
-                      <span className="text-white font-['Geist_Mono'] text-sm font-medium flex-1">
-                        {trait.name}
-                      </span>
-                      <span className="font-['Geist_Mono'] text-sm">
-                        <span className="text-white font-bold">{(trait.level + (pendingUpgrades[trait.id] || 0) * 0.1).toFixed(1)}</span>
-                        <span className="text-white/40 text-xs">/{trait.maxLevel.toFixed(1)}</span>
+                {traits.map((trait) => (
+                  <div
+                    key={trait.id}
+                    className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-3 flex items-center gap-3"
+                  >
+                    {/* Icon */}
+                    <div
+                      className="flex-shrink-0 w-8 h-8 rounded-md border border-white/20 flex items-center justify-center p-1.5"
+                      style={{ backgroundColor: `${TRAIT_COLORS[trait.id]}40` }}
+                    >
+                      <img
+                        src={trait.icon}
+                        alt={trait.name}
+                        className="w-full h-full object-contain filter brightness-0 invert"
+                      />
+                    </div>
+
+                    {/* Trait Name */}
+                    <span className="text-white font-['Geist_Mono'] text-sm font-medium w-28">
+                      {trait.name}
+                    </span>
+
+                    {/* Current Level / Max Level */}
+                    <span className="font-['Geist_Mono'] text-sm w-16">
+                      <span className="text-white font-bold">{trait.level.toFixed(1)}</span>
+                      <span className="text-white/40 text-xs">/{trait.maxLevel.toFixed(1)}</span>
+                    </span>
+
+                    {/* Spacer */}
+                    <div className="flex-1"></div>
+
+                    {/* Decrement Button */}
+                    <button
+                      onClick={() => decrementUpgrade(trait.id)}
+                      disabled={(pendingUpgrades[trait.id] || 0) <= 0}
+                      className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
+                        (pendingUpgrades[trait.id] || 0) <= 0
+                          ? 'bg-white/20 text-white/40 cursor-not-allowed'
+                          : 'bg-white/30 text-white hover:bg-white/40'
+                      }`}
+                    >
+                      <span className="text-lg leading-none">−</span>
+                    </button>
+
+                    {/* Pending Upgrade Value (starts at 0.0) */}
+                    <div className="w-12 text-center">
+                      <span className="text-white font-geist-mono text-base font-bold">
+                        {((pendingUpgrades[trait.id] || 0) * 0.1).toFixed(1)}
                       </span>
                     </div>
 
-                    {/* Bottom Card: Controls */}
-                    <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg p-3 flex items-center gap-3">
-                      <button
-                        onClick={() => decrementUpgrade(trait.id)}
-                        disabled={(pendingUpgrades[trait.id] || 0) <= 0}
-                        className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
-                          (pendingUpgrades[trait.id] || 0) <= 0
-                            ? 'bg-white/20 text-white/40 cursor-not-allowed'
-                            : 'bg-white/30 text-white hover:bg-white/40'
-                        }`}
-                      >
-                        <span className="text-lg leading-none">−</span>
-                      </button>
-
-                      <div className="flex-1 text-center">
-                        <span className="text-white font-geist-mono text-lg font-bold">
-                          {(trait.level + (pendingUpgrades[trait.id] || 0) * 0.1).toFixed(1)}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => incrementUpgrade(trait.id)}
-                        disabled={trait.level >= trait.maxLevel}
-                        className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
-                          trait.level >= trait.maxLevel
-                            ? 'bg-white/20 text-white/40 cursor-not-allowed'
-                            : 'bg-white/30 text-white hover:bg-white/40'
-                        }`}
-                      >
-                        <span className="text-lg leading-none">+</span>
-                      </button>
-                    </div>
+                    {/* Increment Button */}
+                    <button
+                      onClick={() => incrementUpgrade(trait.id)}
+                      disabled={trait.level >= trait.maxLevel}
+                      className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-300 ${
+                        trait.level >= trait.maxLevel
+                          ? 'bg-white/20 text-white/40 cursor-not-allowed'
+                          : 'bg-white/30 text-white hover:bg-white/40'
+                      }`}
+                    >
+                      <span className="text-lg leading-none">+</span>
+                    </button>
                   </div>
                 ))}
-              </div>
               </div>
             </div>
           </div>

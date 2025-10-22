@@ -15,6 +15,19 @@ interface TraitsRadarChartProps {
   pendingUpgrades: Record<string, number>
 }
 
+const TRAIT_COLORS: Record<string, string> = {
+  'analysis': '#1F2937',      // Dark Gray/Black
+  'confidence': '#F59E0B',    // Amber/Gold
+  'execution': '#EF4444',     // Red
+  'innovation': '#8B5CF6',    // Purple
+  'integrity': '#10B981',     // Emerald Green
+  'preservation': '#06B6D4',  // Cyan
+  'resilience': '#F97316',    // Orange
+  'spirit': '#3B82F6',        // Blue
+  'versatility': '#14B8A6',   // Teal
+  'vision': '#A855F7'         // Light Purple
+}
+
 export default function TraitsRadarChart({ traits, pendingUpgrades }: TraitsRadarChartProps) {
   const chartRef = useRef<ReactECharts>(null)
 
@@ -87,15 +100,14 @@ export default function TraitsRadarChart({ traits, pendingUpgrades }: TraitsRada
                   value: projectedLevels,
                   name: 'Projected',
                   lineStyle: {
-                    color: 'rgba(34, 197, 94, 0.8)',
-                    width: 2,
-                    type: 'dashed' as const
+                    color: 'rgba(132, 204, 22, 0.8)',
+                    width: 2
                   },
                   areaStyle: {
-                    color: 'rgba(34, 197, 94, 0.1)'
+                    color: 'rgba(132, 204, 22, 0.1)'
                   },
                   itemStyle: {
-                    color: 'rgba(34, 197, 94, 0.9)'
+                    color: 'rgba(132, 204, 22, 0.9)'
                   }
                 }
               ]
@@ -177,11 +189,12 @@ export default function TraitsRadarChart({ traits, pendingUpgrades }: TraitsRada
           return (
             <div
               key={trait.id}
-              className="absolute w-16 h-16 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center p-3"
+              className="absolute w-16 h-16 rounded-lg border border-white/20 flex items-center justify-center p-3"
               style={{
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                zIndex: 10
+                zIndex: 10,
+                backgroundColor: `${TRAIT_COLORS[trait.id]}40`
               }}
             >
               <img
@@ -209,7 +222,7 @@ export default function TraitsRadarChart({ traits, pendingUpgrades }: TraitsRada
             <span className="text-white/60">Current</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-0.5 border-t-2 border-dashed border-green-500"></div>
+            <div className="w-6 h-0.5" style={{ backgroundColor: '#84cc16' }}></div>
             <span className="text-white/60">Projected</span>
           </div>
         </div>
