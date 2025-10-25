@@ -30,6 +30,7 @@ const BountyLeaderboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [noBountyActive, setNoBountyActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeGroup, setActiveGroup] = useState<1 | 2 | 3>(1);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -180,11 +181,36 @@ const BountyLeaderboard = () => {
               NEXT BOUNTY COMING SOON
             </div>
           ) : groupsEnabled && groupedData ? (
-            <div className="groups-grid">
-              {renderGroupTable(groupedData.group1, 1)}
-              {renderGroupTable(groupedData.group2, 2)}
-              {renderGroupTable(groupedData.group3, 3)}
-            </div>
+            <>
+              <div className="group-tabs-container">
+                <button
+                  className={`group-tab ${activeGroup === 1 ? 'active' : ''}`}
+                  onClick={() => setActiveGroup(1)}
+                >
+                  Group 1
+                  <span className="group-tab-count">{groupedData.group1.length}</span>
+                </button>
+                <button
+                  className={`group-tab ${activeGroup === 2 ? 'active' : ''}`}
+                  onClick={() => setActiveGroup(2)}
+                >
+                  Group 2
+                  <span className="group-tab-count">{groupedData.group2.length}</span>
+                </button>
+                <button
+                  className={`group-tab ${activeGroup === 3 ? 'active' : ''}`}
+                  onClick={() => setActiveGroup(3)}
+                >
+                  Group 3
+                  <span className="group-tab-count">{groupedData.group3.length}</span>
+                </button>
+              </div>
+              <div className="active-group-container">
+                {activeGroup === 1 && renderGroupTable(groupedData.group1, 1)}
+                {activeGroup === 2 && renderGroupTable(groupedData.group2, 2)}
+                {activeGroup === 3 && renderGroupTable(groupedData.group3, 3)}
+              </div>
+            </>
           ) : leaderboardData.length > 0 ? (
             <table className="bounty-table">
               <thead>
