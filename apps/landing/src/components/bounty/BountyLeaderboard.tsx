@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import './BountyLeaderboard.css';
 
-type TabType = 'score' | 'signups' | 'mentions';
-
 interface LeaderboardEntry {
   rank: number;
   name: string;
   handle: string;
   signups: number;
-  communityJoins: number;
   mentions: number;
   posts: number;
   likes: number;
@@ -16,12 +13,19 @@ interface LeaderboardEntry {
   replies: number;
   totalEngagement: number;
   score: number;
+  groupNumber?: number;
+}
+
+interface GroupedLeaderboard {
+  group1: LeaderboardEntry[];
+  group2: LeaderboardEntry[];
+  group3: LeaderboardEntry[];
 }
 
 const BountyLeaderboard = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('score');
-  const [currentPage, setCurrentPage] = useState(1);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [groupedData, setGroupedData] = useState<GroupedLeaderboard | null>(null);
+  const [groupsEnabled, setGroupsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noBountyActive, setNoBountyActive] = useState(false);
@@ -45,8 +49,17 @@ const BountyLeaderboard = () => {
         const data = await response.json();
 
         if (data.success) {
-          setLeaderboardData(data.leaderboard);
           setNoBountyActive(data.noBountyActive || false);
+
+          if (data.groupsEnabled && data.groups) {
+            setGroupsEnabled(true);
+            setGroupedData(data.groups);
+            setLeaderboardData([]);
+          } else {
+            setGroupsEnabled(false);
+            setGroupedData(null);
+            setLeaderboardData(data.leaderboard || []);
+          }
         } else {
           throw new Error(data.error || 'Unknown error');
         }
@@ -61,27 +74,6 @@ const BountyLeaderboard = () => {
     fetchLeaderboard();
   }, []);
 
-  // Reset to page 1 when tab changes or search query changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, searchQuery]);
-
-  // Get sorted data based on active tab
-  const getSortedData = () => {
-    const data = [...leaderboardData];
-
-    switch (activeTab) {
-      case 'score':
-        return data.sort((a, b) => b.score - a.score);
-      case 'signups':
-        return data.sort((a, b) => b.signups - a.signups);
-      case 'mentions':
-        return data.sort((a, b) => b.mentions - a.mentions);
-      default:
-        return data;
-    }
-  };
-
   // Filter data based on search query
   const getFilteredData = (data: LeaderboardEntry[]) => {
     if (!searchQuery.trim()) return data;
@@ -93,54 +85,56 @@ const BountyLeaderboard = () => {
     );
   };
 
-  const sortedData = getSortedData();
-  const filteredData = getFilteredData(sortedData);
-  const rankedData = filteredData.map((entry, index) => ({
-    ...entry,
-    rank: index + 1
-  }));
-  const totalPages = Math.ceil(rankedData.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedData = rankedData.slice(startIndex, endIndex);
+  // Render a single group table
+  const renderGroupTable = (groupData: LeaderboardEntry[], groupNumber: number) => {
+    const filteredData = getFilteredData(groupData);
+    const displayData = filteredData.slice(0, 20); // Show top 20
 
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow + 2) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Always show first page
-      pages.push(1);
-
-      if (currentPage > 3) {
-        pages.push('...');
-      }
-
-      // Show pages around current page
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (currentPage < totalPages - 2) {
-        pages.push('...');
-      }
-
-      // Always show last page
-      if (totalPages > 1) {
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
+    return (
+      <div className="group-container" key={groupNumber}>
+        <h2 className="group-title">Group {groupNumber}</h2>
+        <div className="group-info">
+          <span className="advance-badge">Top 3 Advance</span>
+        </div>
+        <table className="bounty-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Signups</th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayData.map((entry) => (
+              <tr
+                key={entry.handle}
+                className={entry.rank <= 3 ? 'top-three' : ''}
+              >
+                <td>
+                  {entry.rank <= 3 && <span className="medal">🏆</span>}
+                  #{entry.rank}
+                </td>
+                <td className="name-cell">
+                  <img
+                    src={`https://unavatar.io/twitter/${entry.handle.replace('@', '')}`}
+                    alt={entry.name}
+                    className="avatar"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/logos/acepyr-logo-white.svg';
+                    }}
+                  />
+                  <div className="name-info">
+                    <span className="name">{entry.name}</span>
+                    <span className="handle">{entry.handle}</span>
+                  </div>
+                </td>
+                <td className="signups-count">{entry.signups.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   return (
@@ -162,29 +156,16 @@ const BountyLeaderboard = () => {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="bounty-tabs">
-          <button
-            className={`bounty-tab ${activeTab === 'score' ? 'active' : ''}`}
-            onClick={() => setActiveTab('score')}
-          >
-            Score
-          </button>
-          <button
-            className={`bounty-tab ${activeTab === 'signups' ? 'active' : ''}`}
-            onClick={() => setActiveTab('signups')}
-          >
-            Signups
-          </button>
-          <button
-            className={`bounty-tab ${activeTab === 'mentions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mentions')}
-          >
-            Mentions
-          </button>
-        </div>
+        {/* Competition Info Banner */}
+        {!loading && !error && !noBountyActive && groupsEnabled && (
+          <div className="competition-banner">
+            <p className="banner-text">
+              🏆 Top 3 from each group advance to the next stage daily!
+            </p>
+          </div>
+        )}
 
-        {/* Leaderboard Table */}
+        {/* Leaderboard Content */}
         <div className="bounty-table-container">
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#FF8480' }}>
@@ -198,81 +179,18 @@ const BountyLeaderboard = () => {
             <div style={{ textAlign: 'center', padding: '60px', fontSize: '24px', fontWeight: 'bold', color: '#FF8480' }}>
               NEXT BOUNTY COMING SOON
             </div>
-          ) : rankedData.length === 0 ? (
+          ) : groupsEnabled && groupedData ? (
+            <div className="groups-grid">
+              {renderGroupTable(groupedData.group1, 1)}
+              {renderGroupTable(groupedData.group2, 2)}
+              {renderGroupTable(groupedData.group3, 3)}
+            </div>
+          ) : (
             <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
               No leaderboard data available yet.
             </div>
-          ) : (
-            <table className="bounty-table">
-              <thead>
-                <tr>
-                  <th>Rank #</th>
-                  <th>Name</th>
-                  <th>Signups</th>
-                  <th>Mentions</th>
-                  <th>Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map((entry) => (
-                  <tr key={entry.handle}>
-                    <td>{entry.rank}</td>
-                    <td className="name-cell">
-                      <img
-                        src={`https://unavatar.io/twitter/${entry.handle.replace('@', '')}`}
-                        alt={entry.name}
-                        className="avatar"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/logos/acepyr-logo-white.svg';
-                        }}
-                      />
-                      <div className="name-info">
-                        <span className="name">{entry.name}</span>
-                        <span className="handle">{entry.handle}</span>
-                      </div>
-                    </td>
-                    <td>{entry.signups.toLocaleString()}</td>
-                    <td>{entry.mentions.toLocaleString()}</td>
-                    <td>{entry.score.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           )}
         </div>
-
-        {/* Pagination */}
-        {!loading && !error && !noBountyActive && rankedData.length > 0 && totalPages > 1 && (
-          <div className="bounty-pagination">
-            <button
-              className="page-arrow"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              &lt;
-            </button>
-            {getPageNumbers().map((page, index) => (
-              typeof page === 'number' ? (
-                <button
-                  key={page}
-                  className={`page-number ${currentPage === page ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ) : (
-                <span key={`ellipsis-${index}`} className="page-ellipsis">{page}</span>
-              )
-            ))}
-            <button
-              className="page-arrow"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              &gt;
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

@@ -86,7 +86,6 @@ export async function handler(event, context) {
         likes: 0,
         retweets: 0,
         comments: 0,
-        community_joins: 0,
         referral_signups: 0,
         posts: 0,
         comment_mentions: 0
@@ -113,15 +112,7 @@ export async function handler(event, context) {
         totalScore += breakdown.referral_signups * scoringConfig.referral_signups;
       }
 
-      // Count community joins for this bounty (case-insensitive match)
-      if (scoringConfig.community_joins) {
-        const joinsResult = await client.query(
-          'SELECT COUNT(*) as count FROM community_joins WHERE LOWER(referrer_x_handle) = LOWER($1) AND bounty_event_id = $2',
-          [referrerHandle, activeBounty.id]
-        );
-        breakdown.community_joins = parseInt(joinsResult.rows[0].count);
-        totalScore += breakdown.community_joins * scoringConfig.community_joins;
-      }
+      // Community joins scoring removed - only counting signups now
 
       // Count unique comment mentions for this bounty (case-insensitive match)
       if (scoringConfig.comment_mentions) {

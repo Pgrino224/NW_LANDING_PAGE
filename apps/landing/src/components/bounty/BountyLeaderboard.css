@@ -56,36 +56,88 @@
   white-space: nowrap;
 }
 
-/* Tab Navigation */
-.bounty-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+/* Competition Banner */
+.competition-banner {
+  background: linear-gradient(135deg, rgba(255, 132, 128, 0.15) 0%, rgba(255, 132, 128, 0.05) 100%);
+  border: 1px solid rgba(255, 132, 128, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
-.bounty-tab {
-  padding: 12px 24px;
-  background-color: transparent;
-  border: 1px solid #333;
-  border-radius: 8px;
-  color: #ffffe4;
+.banner-text {
   font-family: 'GeistMono', monospace;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffe4;
+  margin: 0;
 }
 
-.bounty-tab:hover {
-  background-color: rgba(255, 132, 128, 0.1);
-  border-color: #ff8480;
+/* Groups Grid */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.bounty-tab.active {
-  background-color: #ff8480;
-  border-color: #ff8480;
-  color: #0a0a0a;
+.group-container {
+  background-color: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.group-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffe4;
+  padding: 20px 20px 12px;
+  margin: 0;
+  text-align: center;
+  background-color: #141414;
+}
+
+.group-info {
+  padding: 8px 20px 16px;
+  text-align: center;
+  background-color: #141414;
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.advance-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: rgba(255, 132, 128, 0.15);
+  border: 1px solid rgba(255, 132, 128, 0.3);
+  border-radius: 20px;
+  font-family: 'GeistMono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff8480;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.top-three {
+  background-color: rgba(255, 215, 0, 0.05) !important;
+  border-left: 3px solid #ffd700;
+}
+
+.top-three:hover {
+  background-color: rgba(255, 215, 0, 0.1) !important;
+}
+
+.medal {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.signups-count {
+  font-weight: 700;
+  color: #ff8480;
 }
 
 /* Time Filters */
@@ -259,6 +311,17 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .groups-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .group-title {
+    font-size: 28px;
+  }
+}
+
 @media (max-width: 768px) {
   .bounty-title {
     font-size: 32px;
@@ -279,20 +342,21 @@
     text-align: center;
   }
 
-  .bounty-tabs {
-    flex-direction: row;
-    justify-content: space-between;
+  .competition-banner {
+    padding: 16px;
   }
 
-  .bounty-tab {
-    flex: 1;
-    padding: 10px 8px;
-    font-size: 12px;
-    text-align: center;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .banner-text {
+    font-size: 14px;
+  }
+
+  .groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-title {
+    font-size: 22px;
+    padding: 16px;
   }
 
   .bounty-time-filters {
@@ -304,7 +368,7 @@
   }
 
   .bounty-table {
-    min-width: 800px;
+    min-width: 400px;
   }
 
   .bounty-table th,

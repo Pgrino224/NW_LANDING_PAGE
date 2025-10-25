@@ -38,3 +38,6 @@ nul
 
 # Local Netlify folder
 .netlify
+
+# Platform app (private - not for public repository)
+apps/platform/
