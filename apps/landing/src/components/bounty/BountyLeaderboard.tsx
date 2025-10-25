@@ -185,6 +185,38 @@ const BountyLeaderboard = () => {
               {renderGroupTable(groupedData.group2, 2)}
               {renderGroupTable(groupedData.group3, 3)}
             </div>
+          ) : leaderboardData.length > 0 ? (
+            <table className="bounty-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Signups</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboardData.slice(0, ITEMS_PER_PAGE).map((entry, index) => (
+                  <tr key={entry.handle}>
+                    <td>#{index + 1}</td>
+                    <td className="name-cell">
+                      <img
+                        src={`https://unavatar.io/twitter/${entry.handle.replace('@', '')}`}
+                        alt={entry.name}
+                        className="avatar"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/logos/acepyr-logo-white.svg';
+                        }}
+                      />
+                      <div className="name-info">
+                        <span className="name">{entry.name}</span>
+                        <span className="handle">{entry.handle}</span>
+                      </div>
+                    </td>
+                    <td className="signups-count">{entry.signups.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
               No leaderboard data available yet.
