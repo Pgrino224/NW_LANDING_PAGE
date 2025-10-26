@@ -127,11 +127,13 @@ export async function handler(event, context) {
     // Connect to database
     await client.connect();
 
-    // Get active bounty event ID
+    // Get active bounty event ID and check if groups are enabled
     const bountyResult = await client.query(
-      'SELECT id FROM bounty_events WHERE is_active = true LIMIT 1'
+      'SELECT id, group_config FROM bounty_events WHERE is_active = true LIMIT 1'
     );
     const activeBountyId = bountyResult.rows.length > 0 ? bountyResult.rows[0].id : null;
+    const groupConfig = bountyResult.rows.length > 0 ? bountyResult.rows[0].group_config : null;
+    const groupsEnabled = groupConfig?.enabled || false;
 
     // Check rate limiting - count signups from this IP in the last hour
     const rateLimitResult = await client.query(
@@ -151,10 +153,57 @@ export async function handler(event, context) {
       };
     }
 
-    // Save to Neon database with verification token, IP address, and bounty_event_id
+    // Determine group assignment if groups are enabled
+    let assignedGroup = null;
+    if (groupsEnabled && activeBountyId && normalizedHandle) {
+      // Get current group sizes for this bounty (only count verified referrers with signups)
+      const groupSizesResult = await client.query(`
+        SELECT
+          COALESCE(group_number, 0) as group_num,
+          COUNT(DISTINCT referrer_x_handle) as participant_count
+        FROM beta_signups
+        WHERE bounty_event_id = $1
+          AND email_verified = true
+          AND referrer_x_handle IS NOT NULL
+          AND group_number IS NOT NULL
+        GROUP BY group_number
+      `, [activeBountyId]);
+
+      // Create a map of group sizes
+      const groupSizes = { 1: 0, 2: 0, 3: 0 };
+      for (const row of groupSizesResult.rows) {
+        if (row.group_num >= 1 && row.group_num <= 3) {
+          groupSizes[row.group_num] = parseInt(row.participant_count);
+        }
+      }
+
+      // Check if this referrer already has a group assignment
+      const existingGroupResult = await client.query(`
+        SELECT group_number
+        FROM beta_signups
+        WHERE bounty_event_id = $1
+          AND LOWER(referrer_x_handle) = LOWER($2)
+          AND group_number IS NOT NULL
+        LIMIT 1
+      `, [activeBountyId, normalizedHandle]);
+
+      if (existingGroupResult.rows.length > 0) {
+        // Referrer already assigned - use existing group
+        assignedGroup = existingGroupResult.rows[0].group_number;
+      } else {
+        // New referrer - assign to smallest group (fair distribution)
+        assignedGroup = Object.keys(groupSizes).reduce((a, b) =>
+          groupSizes[a] <= groupSizes[b] ? parseInt(a) : parseInt(b)
+        );
+      }
+
+      console.log(`Auto-assigned ${normalizedHandle} to group ${assignedGroup} (sizes: ${JSON.stringify(groupSizes)})`);
+    }
+
+    // Save to Neon database with verification token, IP address, bounty_event_id, and group assignment
     await client.query(
-      'INSERT INTO beta_signups (email, referrer_x_handle, verification_token, token_expires_at, ip_address, bounty_event_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [email, normalizedHandle, verificationToken, expiresAt.toISOString(), clientIP, activeBountyId, new Date().toISOString()]
+      'INSERT INTO beta_signups (email, referrer_x_handle, verification_token, token_expires_at, ip_address, bounty_event_id, group_number, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [email, normalizedHandle, verificationToken, expiresAt.toISOString(), clientIP, activeBountyId, assignedGroup, new Date().toISOString()]
     );
 
     await client.end();
